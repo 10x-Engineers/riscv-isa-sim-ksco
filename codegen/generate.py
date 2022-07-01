@@ -22,6 +22,7 @@ from templates import (
     ARITH_VV_CODE_TEMPLATE,
     ARITH_VX_CODE_TEMPLATE,
     ARITH_TEMPLATE,
+    ARITH_MUL_ADD_VX_CODE_TEMPLATE,
 )
 
 from utils import (
@@ -257,16 +258,19 @@ class Arith:
         test_data = generate_test_data(test_data_bytes, width=self.sew)
         test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
 
-        if self.suffix in ["vv", "vvm"]:
+        if self.suffix in ["vv", "vvm", "vs", "mm"]:
             code_template = ARITH_VV_CODE_TEMPLATE
         elif self.suffix in ["vi", "vim"]:
             code_template = ARITH_VI_CODE_TEMPLATE
         elif self.suffix in ["vx", "vxm"]:
-            code_template = ARITH_VX_CODE_TEMPLATE
+            if self.inst in ["vmacc.vx", "vnmsac.vx", "vmadd.vx", "vnmsub.vx"]:
+                code_template = ARITH_MUL_ADD_VX_CODE_TEMPLATE
+            else:
+                code_template = ARITH_VX_CODE_TEMPLATE
         elif self.suffix in ["vf"]:
             code_template = ARITH_VF_CODE_TEMPLATE
         else:
-            raise Exception("Unknown suffix.", self.suffix)
+            raise Exception("Unknown suffix.")
 
         vlmax = (VLEN // self.sew) * self.lmul
         code = ""
@@ -278,7 +282,7 @@ class Arith:
                 mask_code=MASK_CODE if self.suffix.endswith("m") else "",
                 vta="ta",
                 vma="ma",
-                v0t=", v0" if self.suffix.endswith("m") else "",
+                v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
                 op=self.inst,
                 imm=floathex(1.0, self.sew) if self.inst.startswith("vf") else 1,
                 fmv_unit="w" if self.sew == 32 else "d",
@@ -289,7 +293,29 @@ class Arith:
                 to_reg=self.lmul * 2,
             )
 
-            if not self.suffix.endswith("m"):
+            code += code_template.format(
+                sew=self.sew,
+                lmul=self.lmul,
+                vl=vl,
+                mask_code=MASK_CODE if self.suffix.endswith("m") else "",
+                vta="tu",
+                vma="ma",
+                v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
+                op=self.inst,
+                imm=floathex(1, self.sew) if self.inst.startswith("vf") else 1,
+                fmv_unit="w" if self.sew == 32 else "d",
+                vd=self.lmul,
+                vs1=self.lmul * 2,
+                vs2=self.lmul * 3,
+                from_reg=self.lmul,
+                to_reg=self.lmul * 2,
+            )
+
+            if not (
+                self.suffix.endswith("m")
+                or self.inst
+                in ["vmadc.vv", "vmadc.vx", "vmadc.vi", "vmsbc.vv", "vmsbc.vx"]
+            ):
                 code += code_template.format(
                     sew=self.sew,
                     lmul=self.lmul,
@@ -308,25 +334,6 @@ class Arith:
                     to_reg=self.lmul * 2,
                 )
 
-            code += code_template.format(
-                sew=self.sew,
-                lmul=self.lmul,
-                vl=vl,
-                mask_code=MASK_CODE if self.suffix.endswith("m") else "",
-                vta="tu",
-                vma="ma",
-                v0t=", v0" if self.suffix.endswith("m") else "",
-                op=self.inst,
-                imm=floathex(1, self.sew) if self.inst.startswith("vf") else 1,
-                fmv_unit="w" if self.sew == 32 else "d",
-                vd=self.lmul,
-                vs1=self.lmul * 2,
-                vs2=self.lmul * 3,
-                from_reg=self.lmul,
-                to_reg=self.lmul * 2,
-            )
-
-            if not self.suffix.endswith("m"):
                 code += code_template.format(
                     sew=self.sew,
                     lmul=self.lmul,
@@ -382,6 +389,10 @@ def main():
     for lmul in [1, 2, 4, 8]:
         for sew in [8, 16, 32, 64]:
             for inst in [
+                "vaadd.vv",
+                "vaadd.vx",
+                "vaaddu.vv",
+                "vaaddu.vx",
                 "vadc.vim",
                 "vadc.vvm",
                 "vadc.vxm",
@@ -391,10 +402,26 @@ def main():
                 "vand.vi",
                 "vand.vv",
                 "vand.vx",
+                "vasub.vv",
+                "vasub.vx",
+                "vasubu.vv",
+                "vasubu.vx",
                 "vdiv.vv",
                 "vdiv.vx",
                 "vdivu.vv",
                 "vdivu.vx",
+                "vmacc.vv",
+                "vmacc.vx",
+                "vmadc.vi",
+                "vmadc.vim",
+                "vmadc.vv",
+                "vmadc.vvm",
+                "vmadc.vx",
+                "vmadc.vxm",
+                "vmadd.vv",
+                "vmadd.vx",
+                "vmand.mm",
+                "vmandn.mm",
                 "vmax.vv",
                 "vmax.vx",
                 "vmaxu.vv",
@@ -406,6 +433,34 @@ def main():
                 "vmin.vx",
                 "vminu.vv",
                 "vminu.vx",
+                "vmnand.mm",
+                "vmnor.mm",
+                "vmor.mm",
+                "vmorn.mm",
+                "vmsbc.vv",
+                "vmsbc.vvm",
+                "vmsbc.vx",
+                "vmsbc.vxm",
+                "vmseq.vi",
+                "vmseq.vv",
+                "vmseq.vx",
+                "vmsgt.vi",
+                "vmsgt.vx",
+                "vmsgtu.vi",
+                "vmsgtu.vx",
+                "vmsle.vi",
+                "vmsle.vv",
+                "vmsle.vx",
+                "vmsleu.vi",
+                "vmsleu.vv",
+                "vmsleu.vx",
+                "vmslt.vv",
+                "vmslt.vx",
+                "vmsltu.vv",
+                "vmsltu.vx",
+                "vmsne.vi",
+                "vmsne.vv",
+                "vmsne.vx",
                 "vmul.vv",
                 "vmul.vx",
                 "vmulh.vv",
@@ -414,9 +469,23 @@ def main():
                 "vmulhsu.vx",
                 "vmulhu.vv",
                 "vmulhu.vx",
+                "vmxnor.mm",
+                "vmxor.mm",
+                "vnmsac.vv",
+                "vnmsac.vx",
+                "vnmsub.vv",
+                "vnmsub.vx",
                 "vor.vi",
                 "vor.vv",
                 "vor.vx",
+                "vredand.vs",
+                "vredmax.vs",
+                "vredmaxu.vs",
+                "vredmin.vs",
+                "vredminu.vs",
+                "vredor.vs",
+                "vredsum.vs",
+                "vredxor.vs",
                 "vrem.vv",
                 "vrem.vx",
                 "vremu.vv",
@@ -426,11 +495,16 @@ def main():
                 "vrgather.vx",
                 "vrsub.vi",
                 "vrsub.vx",
+                "vsadd.vi",
+                "vsadd.vv",
+                "vsadd.vx",
                 "vsaddu.vi",
                 "vsaddu.vv",
                 "vsaddu.vx",
                 "vsbc.vvm",
                 "vsbc.vxm",
+                "vslide1down.vx",
+                "vslide1up.vx",
                 "vslidedown.vi",
                 "vslidedown.vx",
                 "vslideup.vi",
@@ -438,12 +512,24 @@ def main():
                 "vsll.vi",
                 "vsll.vv",
                 "vsll.vx",
+                "vsmul.vv",
+                "vsmul.vx",
                 "vsra.vi",
                 "vsra.vv",
                 "vsra.vx",
                 "vsrl.vi",
                 "vsrl.vv",
                 "vsrl.vx",
+                "vssra.vi",
+                "vssra.vv",
+                "vssra.vx",
+                "vssrl.vi",
+                "vssrl.vv",
+                "vssrl.vx",
+                "vssub.vv",
+                "vssub.vx",
+                "vssubu.vv",
+                "vssubu.vx",
                 "vsub.vv",
                 "vsub.vx",
                 "vxor.vi",

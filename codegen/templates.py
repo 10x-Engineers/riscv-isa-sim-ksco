@@ -11,7 +11,6 @@ rv64uv_sc_tests = \\
 {data}
 
 rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
-rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))
 """
 
 HEADER_TEMPLATE = """
@@ -313,6 +312,28 @@ ARITH_VX_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
   li t2, {imm}
   {op} v{vd}, v{vs1}, t2{v0t}
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+  la a2, sres
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
+ARITH_MUL_ADD_VX_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  la a2, tdat
+  vle{sew}.v v{vs1}, (a2)
+  vle{sew}.v v{vd}, (a2)
+
+  {mask_code}
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  li t2, {imm}
+  {op} v{vd}, t2, v{vs1}{v0t}
 
   li t0, -1
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
