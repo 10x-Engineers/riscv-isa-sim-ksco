@@ -126,7 +126,9 @@ UNIT_STRIDE_LOAD_CODE_TEMPLATE = """
   li t0, -1
   vsetvli t1, t0, e{eew},m{lmul},ta,ma
   la a1, res
-  vse{eew}.v v{lmul}, (a1)"""
+  vse{eew}.v v{lmul}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}"""
 
 UNIT_STRIDE_STORE_CODE_TEMPLATE = """
   li t0, -1
@@ -147,22 +149,13 @@ UNIT_STRIDE_STORE_CODE_TEMPLATE = """
   li t0, -1
   vsetvli t1, t0, e{eew},m{lmul},ta,ma
   vle{eew}.v v{lmul}, (a1)
-  """
+
+  addi x0, x{from_reg}, {to_reg}"""
 
 STRIDE_TEMPLATE = """
 RVTEST_CODE_BEGIN
 
-{code_vm0_ta_ma}
-  addi x0, x{from_reg}, {to_reg}
-
-{code_vm1_ta_ma}
-  addi x0, x{from_reg}, {to_reg}
-
-{code_vm0_tu_ma}
-  addi x0, x{from_reg}, {to_reg}
-
-{code_vm1_ta_mu}
-  addi x0, x{from_reg}, {to_reg}
+{code}
 
   TEST_CASE(2, x0, 0x0)
   TEST_PASSFAIL
@@ -204,22 +197,14 @@ STRIDED_LOAD_CODE_TEMPLATE = """
   li t0, -1
   vsetvli t1, t0, e{eew},m{lmul},{vta},{vma}
   la a1, res
-  vse{eew}.v v{lmul}, (a1)"""
+  vse{eew}.v v{lmul}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}"""
 
 INDEXED_TEMPLATE = """
 RVTEST_CODE_BEGIN
 
-{code_vm0_ta_ma}
-  addi x0, x{from_reg}, {to_reg}
-
-{code_vm1_ta_ma}
-  addi x0, x{from_reg}, {to_reg}
-
-{code_vm0_tu_ma}
-  addi x0, x{from_reg}, {to_reg}
-
-{code_vm1_ta_mu}
-  addi x0, x{from_reg}, {to_reg}
+{code}
 
   TEST_CASE(2, x0, 0x0)
   TEST_PASSFAIL
@@ -269,7 +254,8 @@ INDEXED_LOAD_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
   la a1, res
   vse{sew}.v v{vd}, (a1)
-"""
+
+  addi x0, x{from_reg}, {to_reg}"""
 
 ARITH_VV_CODE_TEMPLATE = """
   li t0, -1
@@ -363,10 +349,7 @@ ARITH_VF_CODE_TEMPLATE = """
 ARITH_TEMPLATE = """
 RVTEST_CODE_BEGIN
 
-{code_vm0_ta_ma}
-{code_vm1_ta_ma}
-{code_vm0_tu_ma}
-{code_vm1_ta_mu}
+{code}
 
   TEST_CASE(2, x0, 0x0)
   TEST_PASSFAIL
