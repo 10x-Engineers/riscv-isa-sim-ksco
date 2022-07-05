@@ -22,7 +22,7 @@ HEADER_TEMPLATE = """
 # {filename}
 #-----------------------------------------------------------------------------
 #
-# Test {inst_name} instructions.
+# Test {insn_name} insnructions.
 # {extras}
 #
 
@@ -247,7 +247,7 @@ INDEXED_LOAD_CODE_TEMPLATE = """
   {mask_code}
   li t0, {vl}
   vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
-  {inst}{offset_eew}.v v{vd}, (s1), v{vs2}{v0t}
+  {insn}{offset_eew}.v v{vd}, (s1), v{vs2}{v0t}
 
   li t0, -1
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
@@ -261,8 +261,12 @@ ARITH_VV_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
   la a2, tdat
   vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
   la a2, tdat+8
+
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
   vle{sew}.v v{vs2}, (a2)
 
   {mask_code}
@@ -271,10 +275,9 @@ ARITH_VV_CODE_TEMPLATE = """
   {op} v{vd}, v{vs1}, v{vs2}{v0t}
 
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   la a1, res
   vse{sew}.v v{vd}, (a1)
-  la a2, sres
 
   addi x0, x{from_reg}, {to_reg}
 """
@@ -284,6 +287,8 @@ ARITH_VI_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
   la a2, tdat
   vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
 
   {mask_code}
@@ -292,10 +297,9 @@ ARITH_VI_CODE_TEMPLATE = """
   {op} v{vd}, v{vs1}, {imm}{v0t}
 
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   la a1, res
   vse{sew}.v v{vd}, (a1)
-  la a2, sres
 
   addi x0, x{from_reg}, {to_reg}
 """
@@ -305,6 +309,8 @@ ARITH_VX_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
   la a2, tdat
   vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
 
   {mask_code}
@@ -314,10 +320,9 @@ ARITH_VX_CODE_TEMPLATE = """
   {op} v{vd}, v{vs1}, t2{v0t}
 
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   la a1, res
   vse{sew}.v v{vd}, (a1)
-  la a2, sres
 
   addi x0, x{from_reg}, {to_reg}
 """
@@ -327,6 +332,8 @@ ARITH_MUL_ADD_VX_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
   la a2, tdat
   vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
 
   {mask_code}
@@ -336,10 +343,9 @@ ARITH_MUL_ADD_VX_CODE_TEMPLATE = """
   {op} v{vd}, t2, v{vs1}{v0t}
 
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   la a1, res
   vse{sew}.v v{vd}, (a1)
-  la a2, sres
 
   addi x0, x{from_reg}, {to_reg}
 """
@@ -349,6 +355,8 @@ ARITH_VF_CODE_TEMPLATE = """
   vsetvli t1, t0, e{sew},m{lmul},ta,ma
   la a2, tdat
   vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
 
   {mask_code}
@@ -359,10 +367,9 @@ ARITH_VF_CODE_TEMPLATE = """
   {op} v{vd}, v{vs1}, f2{v0t}
 
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   la a1, res
   vse{sew}.v v{vd}, (a1)
-  la a2, sres
 
   addi x0, x{from_reg}, {to_reg}
 """
@@ -381,9 +388,6 @@ RVTEST_CODE_END
 RVTEST_DATA_BEGIN
 
 res:
-  .zero {nbytes}
-
-sres:
   .zero {nbytes}
 
 tdat:

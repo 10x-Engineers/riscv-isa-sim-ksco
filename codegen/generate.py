@@ -46,7 +46,7 @@ class LoadWhole:
         test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
         return (HEADER_TEMPLATE + LOAD_WHOLE_TEMPLATE).format(
             filename=self.filename,
-            inst_name=f"vl{self.nf}re{self.eew}.v",
+            insn_name=f"vl{self.nf}re{self.eew}.v",
             extras="",
             nf=self.nf,
             nbytes=nbytes,
@@ -70,7 +70,7 @@ class StoreWhole:
         test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
         return (HEADER_TEMPLATE + STORE_WHOLE_TEMPLATE).format(
             filename=self.filename,
-            inst_name=f"vs{self.nf}r.v",
+            insn_name=f"vs{self.nf}r.v",
             extras="",
             nf=self.nf,
             nbytes=nbytes,
@@ -83,9 +83,9 @@ class StoreWhole:
 class UnitStrideLoadStore:
     """Generate vle<EEW>.v, vse<EEW>.v tests."""
 
-    def __init__(self, filename, inst, lmul, eew):
+    def __init__(self, filename, insn, lmul, eew):
         self.filename = filename
-        self.inst = inst
+        self.insn = insn
         self.lmul = lmul
         self.eew = eew
 
@@ -96,7 +96,7 @@ class UnitStrideLoadStore:
 
         code_template = (
             UNIT_STRIDE_STORE_CODE_TEMPLATE
-            if self.inst == "vse"
+            if self.insn == "vse"
             else UNIT_STRIDE_LOAD_CODE_TEMPLATE
         )
 
@@ -153,7 +153,7 @@ class UnitStrideLoadStore:
 
         return (HEADER_TEMPLATE + STRIDE_TEMPLATE).format(
             filename=self.filename,
-            inst_name=f"{self.inst}{self.eew}.v",
+            insn_name=f"{self.insn}{self.eew}.v",
             extras=f"With LMUL={self.lmul}",
             nbytes=test_data_bytes,
             test_data_str=test_data_str,
@@ -235,7 +235,7 @@ class StridedLoad:
 
         return (HEADER_TEMPLATE + STRIDE_TEMPLATE).format(
             filename=self.filename,
-            inst_name=f"vlse{self.eew}.v",
+            insn_name=f"vlse{self.eew}.v",
             extras=f"With LMUL={self.lmul}",
             nbytes=test_data_bytes,
             test_data_str=test_data_str,
@@ -244,26 +244,35 @@ class StridedLoad:
 
 
 class Arith:
-    """Generate arith instruction tests."""
+    """Generate arith insnruction tests."""
 
-    def __init__(self, filename, inst, lmul, sew):
+    def __init__(self, filename, insn, lmul, sew):
         self.filename = filename
-        self.inst = inst
+        self.insn = insn
         self.lmul = lmul
         self.sew = sew
-        self.suffix = inst.split(".", maxsplit=1)[1]
+        self.suffix = insn.split(".", maxsplit=1)[1]
 
     def __str__(self):
-        test_data_bytes = (VLEN * self.lmul) // 8 + 8
+        test_data_bytes = (VLEN * self.lmul * 2) // 8 + 8
         test_data = generate_test_data(test_data_bytes, width=self.sew)
         test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
 
-        if self.suffix in ["vv", "vvm", "vs", "mm"]:
+        if self.suffix in ["vv", "vvm", "vs", "mm", "wv", "vm"]:
             code_template = ARITH_VV_CODE_TEMPLATE
-        elif self.suffix in ["vi", "vim"]:
+        elif self.suffix in ["vi", "vim", "wi"]:
             code_template = ARITH_VI_CODE_TEMPLATE
-        elif self.suffix in ["vx", "vxm"]:
-            if self.inst in ["vmacc.vx", "vnmsac.vx", "vmadd.vx", "vnmsub.vx"]:
+        elif self.suffix in ["vx", "vxm", "wx"]:
+            if self.insn in [
+                "vmacc.vx",
+                "vnmsac.vx",
+                "vmadd.vx",
+                "vnmsub.vx",
+                "vwmacc.vx",
+                "vwmaccsu.vx",
+                "vwmaccu.vx",
+                "vwmaccus.vx",
+            ]:
                 code_template = ARITH_MUL_ADD_VX_CODE_TEMPLATE
             else:
                 code_template = ARITH_VX_CODE_TEMPLATE
@@ -274,89 +283,104 @@ class Arith:
 
         vlmax = (VLEN // self.sew) * self.lmul
         code = ""
+
+        vd = self.lmul
+        vd_lmul = self.lmul
+        vs1 = self.lmul * 2
+        vs2 = self.lmul * 3
+        if self.insn.startswith("vw"):
+            vd *= 2
+            vd_lmul *= 2
+            vs1 *= 2
+            vs2 *= 2
+
         for vl in [vlmax // 2, vlmax - 1, vlmax]:
             code += code_template.format(
                 sew=self.sew,
+                vd_lmul=vd_lmul,
                 lmul=self.lmul,
                 vl=vl,
                 mask_code=MASK_CODE if self.suffix.endswith("m") else "",
                 vta="ta",
                 vma="ma",
                 v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
-                op=self.inst,
-                imm=floathex(1.0, self.sew) if self.inst.startswith("vf") else 1,
+                op=self.insn,
+                imm=floathex(1.0, self.sew) if self.insn.startswith("vf") else 1,
                 fmv_unit="w" if self.sew == 32 else "d",
-                vd=self.lmul,
-                vs1=self.lmul * 2,
-                vs2=self.lmul * 3,
-                from_reg=self.lmul,
-                to_reg=self.lmul * 2,
+                vd=vd,
+                vs1=vs1,
+                vs2=vs2,
+                from_reg=vd,
+                to_reg=vs1,
             )
 
             code += code_template.format(
                 sew=self.sew,
+                vd_lmul=vd_lmul,
                 lmul=self.lmul,
                 vl=vl,
                 mask_code=MASK_CODE if self.suffix.endswith("m") else "",
                 vta="tu",
                 vma="ma",
                 v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
-                op=self.inst,
-                imm=floathex(1, self.sew) if self.inst.startswith("vf") else 1,
+                op=self.insn,
+                imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
                 fmv_unit="w" if self.sew == 32 else "d",
-                vd=self.lmul,
-                vs1=self.lmul * 2,
-                vs2=self.lmul * 3,
-                from_reg=self.lmul,
-                to_reg=self.lmul * 2,
+                vd=vd,
+                vs1=vs1,
+                vs2=vs2,
+                from_reg=vd,
+                to_reg=vs1,
             )
 
             if not (
                 self.suffix.endswith("m")
-                or self.inst
+                or self.insn
                 in ["vmadc.vv", "vmadc.vx", "vmadc.vi", "vmsbc.vv", "vmsbc.vx"]
             ):
                 code += code_template.format(
                     sew=self.sew,
+                    vd_lmul=vd_lmul,
                     lmul=self.lmul,
                     vl=vl,
                     mask_code=MASK_CODE,
                     vta="ta",
                     vma="ma",
                     v0t=", v0.t",
-                    op=self.inst,
-                    imm=floathex(1, self.sew) if self.inst.startswith("vf") else 1,
+                    op=self.insn,
+                    imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
                     fmv_unit="w" if self.sew == 32 else "d",
-                    vd=self.lmul,
-                    vs1=self.lmul * 2,
-                    vs2=self.lmul * 3,
-                    from_reg=self.lmul,
-                    to_reg=self.lmul * 2,
+                    vd=vd,
+                    vs1=vs1,
+                    vs2=vs2,
+                    from_reg=vd,
+                    to_reg=vs1,
                 )
 
                 code += code_template.format(
                     sew=self.sew,
+                    vd_lmul=vd_lmul,
                     lmul=self.lmul,
                     vl=vl,
                     mask_code=MASK_CODE,
                     vta="ta",
                     vma="ma",
                     v0t=", v0" if self.suffix.endswith("m") else ", v0.t",
-                    op=self.inst,
-                    imm=floathex(1, self.sew) if self.inst.startswith("vf") else 1,
+                    op=self.insn,
+                    imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
                     fmv_unit="w" if self.sew == 32 else "d",
-                    vd=self.lmul,
-                    vs1=self.lmul * 2,
-                    vs2=self.lmul * 3,
-                    from_reg=self.lmul,
-                    to_reg=self.lmul * 2,
+                    vd=vd,
+                    vs1=vs1,
+                    vs2=vs2,
+                    from_reg=vd,
+                    to_reg=vs1,
                 )
 
         return (HEADER_TEMPLATE + ARITH_TEMPLATE).format(
             filename=self.filename,
-            inst_name=self.inst,
+            insn_name=self.insn,
             extras=f"With LMUL={self.lmul}, SEW={self.sew}",
-            nbytes=test_data_bytes,
+            nbytes=test_data_bytes * 2,
             test_data=test_data_str,
             code=code,
         )
@@ -375,9 +399,9 @@ def main():
 
     for lmul in [1, 2, 4, 8]:
         for eew in [8, 16, 32, 64]:
-            for inst in ["vle", "vse"]:
-                filename = f"{inst}{eew}.v_LMUL{lmul}.S"
-                test = UnitStrideLoadStore(filename, inst, lmul, eew)
+            for insn in ["vle", "vse"]:
+                filename = f"{insn}{eew}.v_LMUL{lmul}.S"
+                test = UnitStrideLoadStore(filename, insn, lmul, eew)
                 save_to_file(BASE_PATH + filename, str(test))
 
     for lmul in [1, 2, 4, 8]:
@@ -388,7 +412,7 @@ def main():
 
     for lmul in [1, 2, 4, 8]:
         for sew in [8, 16, 32, 64]:
-            for inst in [
+            for insn in [
                 "vaadd.vv",
                 "vaadd.vx",
                 "vaaddu.vv",
@@ -535,13 +559,14 @@ def main():
                 "vxor.vi",
                 "vxor.vv",
                 "vxor.vx",
+                "vcompress.vm",
             ]:
-                filename = f"{inst}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, inst, lmul, sew)
+                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+                arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
 
         for sew in [32, 64]:
-            for inst in [
+            for insn in [
                 "vfadd.vf",
                 "vfadd.vv",
                 "vfmax.vf",
@@ -557,8 +582,59 @@ def main():
                 "vfsub.vf",
                 "vfsub.vv",
             ]:
-                filename = f"{inst}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, inst, lmul, sew)
+                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+                arith = Arith(filename, insn, lmul, sew)
+                save_to_file(BASE_PATH + filename, str(arith))
+
+    for lmul in [1, 2, 4]:
+        for sew in [8, 16, 32]:
+            for insn in [
+                "vnsrl.wv",
+                "vnsrl.wx",
+                "vnsrl.wi",
+                "vnsra.wv",
+                "vnsra.wx",
+                "vnsra.wi",
+                "vnclipu.wv",
+                "vnclipu.wx",
+                "vnclipu.wi",
+                "vnclip.wv",
+                "vnclip.wx",
+                "vnclip.wi",
+                "vwredsumu.vs",
+                "vwredsum.vs",
+                "vwaddu.vv",
+                "vwaddu.vx",
+                "vwsubu.vv",
+                "vwsubu.vx",
+                "vwadd.vv",
+                "vwadd.vx",
+                "vwsub.vv",
+                "vwsub.vx",
+                "vwaddu.wv",
+                "vwaddu.wx",
+                "vwsubu.wv",
+                "vwsubu.wx",
+                "vwadd.wv",
+                "vwadd.wx",
+                "vwsub.wv",
+                "vwsub.wx",
+                "vwmul.vv",
+                "vwmul.vx",
+                "vwmulu.vv",
+                "vwmulu.vx",
+                "vwmulsu.vv",
+                "vwmulsu.vx",
+                "vwmaccu.vv",
+                "vwmaccu.vx",
+                "vwmacc.vv",
+                "vwmacc.vx",
+                "vwmaccsu.vv",
+                "vwmaccsu.vx",
+                "vwmaccus.vx",
+            ]:
+                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+                arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
 
     files = []
