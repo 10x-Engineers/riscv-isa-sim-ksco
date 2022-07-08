@@ -24,6 +24,9 @@ from templates import (
     ARITH_TEMPLATE,
     ARITH_MUL_ADD_VX_CODE_TEMPLATE,
     ARITH_MUL_ADD_VF_CODE_TEMPLATE,
+    ARITH_VMV_VI_CODE_TEMPLATE,
+    ARITH_VMV_VV_CODE_TEMPLATE,
+    ARITH_VMV_VX_CODE_TEMPLATE,
 )
 
 from utils import (
@@ -295,6 +298,12 @@ class Arith:
                 code_template = ARITH_MUL_ADD_VF_CODE_TEMPLATE
             else:
                 code_template = ARITH_VF_CODE_TEMPLATE
+        elif self.insn == "vmv.v.v":
+            code_template = ARITH_VMV_VV_CODE_TEMPLATE
+        elif self.insn == "vmv.v.i":
+            code_template = ARITH_VMV_VI_CODE_TEMPLATE
+        elif self.insn in ["vmv.v.x", "vmv.s.x"]:
+            code_template = ARITH_VMV_VX_CODE_TEMPLATE
         else:
             raise Exception("Unknown suffix.")
 
@@ -357,6 +366,7 @@ class Arith:
 
             if not (
                 self.suffix.endswith("m")
+                or self.insn.startswith("vmv")
                 or self.insn
                 in ["vmadc.vv", "vmadc.vx", "vmadc.vi", "vmsbc.vv", "vmsbc.vx"]
             ):
@@ -582,6 +592,10 @@ def main():
                 "vxor.vv",
                 "vxor.vx",
                 "vcompress.vm",
+                "vmv.v.v",
+                "vmv.v.x",
+                "vmv.v.i",
+                "vmv.s.x",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)

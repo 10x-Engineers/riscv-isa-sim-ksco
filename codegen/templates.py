@@ -398,6 +398,70 @@ ARITH_MUL_ADD_VF_CODE_TEMPLATE = """
   addi x0, x{from_reg}, {to_reg}
 """
 
+ARITH_VMV_VV_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  la a2, tdat
+  vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  vle{sew}.v v{vd}, (a2)
+
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  {op} v{vd}, v{vs1}
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
+ARITH_VMV_VX_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  la a2, tdat
+  vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  vle{sew}.v v{vd}, (a2)
+
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  li t2, {imm}
+  {op} v{vd}, t2
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
+ARITH_VMV_VI_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  la a2, tdat
+  vle{sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  vle{sew}.v v{vd}, (a2)
+
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  {op} v{vd}, {imm}
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
 ARITH_TEMPLATE = """
 RVTEST_CODE_BEGIN
 
