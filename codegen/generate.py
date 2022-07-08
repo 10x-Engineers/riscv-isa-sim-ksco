@@ -23,6 +23,7 @@ from templates import (
     ARITH_VX_CODE_TEMPLATE,
     ARITH_TEMPLATE,
     ARITH_MUL_ADD_VX_CODE_TEMPLATE,
+    ARITH_MUL_ADD_VF_CODE_TEMPLATE,
 )
 
 from utils import (
@@ -276,8 +277,24 @@ class Arith:
                 code_template = ARITH_MUL_ADD_VX_CODE_TEMPLATE
             else:
                 code_template = ARITH_VX_CODE_TEMPLATE
-        elif self.suffix in ["vf"]:
-            code_template = ARITH_VF_CODE_TEMPLATE
+        elif self.suffix in ["vf", "wf"]:
+            if self.insn in [
+                "vfmacc.vf",
+                "vfmadd.vf",
+                "vfmsac.vf",
+                "vfmsub.vf",
+                "vfnmacc.vf",
+                "vfnmadd.vf",
+                "vfnmsac.vf",
+                "vfnmsub.vf",
+                "vfwmacc.vf",
+                "vfwmsac.vf",
+                "vfwnmsac.vf",
+                "vfwnmacc.vf",
+            ]:
+                code_template = ARITH_MUL_ADD_VF_CODE_TEMPLATE
+            else:
+                code_template = ARITH_VF_CODE_TEMPLATE
         else:
             raise Exception("Unknown suffix.")
 
@@ -288,7 +305,7 @@ class Arith:
         vd_lmul = self.lmul
         vs1 = self.lmul * 2
         vs2 = self.lmul * 3
-        if self.insn.startswith("vw"):
+        if self.insn.startswith("vw") or self.insn.startswith("vfw"):
             vd *= 2
             vd_lmul *= 2
             vs1 *= 2
@@ -581,6 +598,47 @@ def main():
                 "vfsgnjx.vv",
                 "vfsub.vf",
                 "vfsub.vv",
+                "vfredosum.vs",
+                "vfredusum.vs",
+                "vfredmax.vs",
+                "vfredmin.vs",
+                "vfredosum.vs",
+                "vfredusum.vs",
+                "vfredmax.vs",
+                "vfredmin.vs",
+                "vfslide1up.vf",
+                "vfslide1down.vf",
+                "vmfeq.vv",
+                "vmfeq.vf",
+                "vmfne.vv",
+                "vmfne.vf",
+                "vmflt.vv",
+                "vmflt.vf",
+                "vmfle.vv",
+                "vmfle.vf",
+                "vmfgt.vf",
+                "vmfge.vf",
+                "vfmul.vv",
+                "vfmul.vf",
+                "vfdiv.vv",
+                "vfdiv.vf",
+                "vfrdiv.vf",
+                "vfmacc.vv",
+                "vfmacc.vf",
+                "vfnmacc.vv",
+                "vfnmacc.vf",
+                "vfmsac.vv",
+                "vfmsac.vf",
+                "vfnmsac.vv",
+                "vfnmsac.vf",
+                "vfmadd.vv",
+                "vfmadd.vf",
+                "vfnmadd.vv",
+                "vfnmadd.vf",
+                "vfmsub.vv",
+                "vfmsub.vf",
+                "vfnmsub.vv",
+                "vfnmsub.vf",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -632,6 +690,34 @@ def main():
                 "vwmaccsu.vv",
                 "vwmaccsu.vx",
                 "vwmaccus.vx",
+            ]:
+                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+                arith = Arith(filename, insn, lmul, sew)
+                save_to_file(BASE_PATH + filename, str(arith))
+
+    for lmul in [1, 2, 4]:
+        for sew in [32]:
+            for insn in [
+                "vfwadd.vv",
+                "vfwadd.vf",
+                "vfwsub.vv",
+                "vfwsub.vf",
+                "vfwadd.wv",
+                "vfwadd.wf",
+                "vfwsub.wv",
+                "vfwsub.wf",
+                "vfwmacc.vv",
+                "vfwmacc.vf",
+                "vfwnmacc.vv",
+                "vfwnmacc.vf",
+                "vfwmsac.vv",
+                "vfwmsac.vf",
+                "vfwnmsac.vv",
+                "vfwnmsac.vf",
+                "vfwredosum.vs",
+                "vfwredusum.vs",
+                "vfwmul.vv",
+                "vfwmul.vf",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
