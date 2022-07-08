@@ -310,6 +310,11 @@ class Arith:
             vd_lmul *= 2
             vs1 *= 2
             vs2 *= 2
+        elif self.insn == "vrgatherei16.vv":
+            emul = max(self.lmul, int((16 / self.sew) * self.lmul))
+            vd = emul
+            vs1 = emul * 2
+            vs2 = emul * 3
 
         for vl in [vlmax // 2, vlmax - 1, vlmax]:
             code += code_template.format(
@@ -643,6 +648,16 @@ def main():
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
+
+    for lmul in [1, 2, 4, 8]:
+        for sew in [8, 16, 32, 64]:
+            emul = (16 / sew) * lmul
+            if emul > 8:
+                continue
+            insn = "vrgatherei16.vv"
+            filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+            arith = Arith(filename, insn, lmul, sew)
+            save_to_file(BASE_PATH + filename, str(arith))
 
     for lmul in [1, 2, 4]:
         for sew in [8, 16, 32]:
