@@ -298,7 +298,7 @@ class Arith:
                 code_template = ARITH_MUL_ADD_VF_CODE_TEMPLATE
             else:
                 code_template = ARITH_VF_CODE_TEMPLATE
-        elif self.insn == "vmv.v.v":
+        elif self.insn in ["vmv.v.v", "vmv1r.v", "vmv2r.v", "vmv4r.v", "vmv8r.v"]:
             code_template = ARITH_VMV_VV_CODE_TEMPLATE
         elif self.insn == "vmv.v.i":
             code_template = ARITH_VMV_VI_CODE_TEMPLATE
@@ -751,6 +751,31 @@ def main():
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
+
+    sew = 8
+    insn = "vmv1r.v"
+    lmul = 1
+    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    arith = Arith(filename, insn, lmul, sew)
+    save_to_file(BASE_PATH + filename, str(arith))
+
+    insn = "vmv2r.v"
+    lmul = 2
+    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    arith = Arith(filename, insn, lmul, sew)
+    save_to_file(BASE_PATH + filename, str(arith))
+
+    insn = "vmv4r.v"
+    lmul = 4
+    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    arith = Arith(filename, insn, lmul, sew)
+    save_to_file(BASE_PATH + filename, str(arith))
+
+    insn = "vmv8r.v"
+    lmul = 8
+    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    arith = Arith(filename, insn, lmul, sew)
+    save_to_file(BASE_PATH + filename, str(arith))
 
     files = []
     for file in sorted(os.listdir(BASE_PATH)):
