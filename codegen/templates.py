@@ -484,6 +484,29 @@ ARITH_EXT_CODE_TEMPLATE = """
   addi x0, x{from_reg}, {to_reg}
 """
 
+ARITH_CVT_CODE_TEMPLATE = """
+  li t0, -1
+  la a2, tdat
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  vle{sew}.v v{vd}, (a2)
+  la a2, tdat+8
+
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vle{sew}.v v{vs1}, (a2)
+
+  {mask_code}
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  {op} v{vd}, v{vs1}{v0t}
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
 ARITH_TEMPLATE = """
 RVTEST_CODE_BEGIN
 

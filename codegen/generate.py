@@ -28,6 +28,7 @@ from templates import (
     ARITH_VMV_VV_CODE_TEMPLATE,
     ARITH_VMV_VX_CODE_TEMPLATE,
     ARITH_EXT_CODE_TEMPLATE,
+    ARITH_CVT_CODE_TEMPLATE,
 )
 
 from utils import (
@@ -265,6 +266,12 @@ class Arith:
 
         if self.suffix in ["vv", "vvm", "vs", "mm", "wv", "vm"]:
             code_template = ARITH_VV_CODE_TEMPLATE
+        elif (
+            self.insn.startswith("vfcvt")
+            or self.insn.startswith("vfwcvt")
+            or self.insn.startswith("vfncvt")
+        ):
+            code_template = ARITH_CVT_CODE_TEMPLATE
         elif self.suffix in ["vi", "vim", "wi"]:
             code_template = ARITH_VI_CODE_TEMPLATE
         elif self.suffix in ["vx", "vxm", "wx"]:
@@ -317,7 +324,7 @@ class Arith:
         vd_lmul = self.lmul
         vs1 = self.lmul * 2
         vs2 = self.lmul * 3
-        if self.insn.startswith("vw") or self.insn.startswith("vfw"):
+        if self.insn.startswith("vw") or self.insn.startswith("vfw") or self.insn.startswith("vfncvt"):
             vd *= 2
             vd_lmul *= 2
             vs1 *= 2
@@ -661,6 +668,12 @@ def main():
                 "vfmsub.vf",
                 "vfnmsub.vv",
                 "vfnmsub.vf",
+                "vfcvt.xu.f.v",
+                "vfcvt.x.f.v",
+                "vfcvt.rtz.xu.f.v",
+                "vfcvt.rtz.x.f.v",
+                "vfcvt.f.xu.v",
+                "vfcvt.f.x.v",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -765,10 +778,31 @@ def main():
                 "vfwredusum.vs",
                 "vfwmul.vv",
                 "vfwmul.vf",
+                "vfwcvt.xu.f.v",
+                "vfwcvt.x.f.v",
+                "vfwcvt.rtz.xu.f.v",
+                "vfwcvt.rtz.x.f.v",
+                "vfwcvt.f.xu.v",
+                "vfwcvt.f.x.v",
+                "vfwcvt.f.f.v",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
+        # for sew in [64]:
+        #     for insn in [
+        #         "vfncvt.xu.f.w",
+        #         "vfncvt.x.f.w",
+        #         "vfncvt.rtz.xu.f.w",
+        #         "vfncvt.rtz.x.f.w",
+        #         "vfncvt.f.xu.w",
+        #         "vfncvt.f.x.w",
+        #         "vfncvt.f.f.w",
+        #         "vfncvt.rod.f.f.w",
+        #     ]:
+        #         filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+        #         arith = Arith(filename, insn, lmul, sew)
+        #         save_to_file(BASE_PATH + filename, str(arith))
 
     sew = 8
     insn = "vmv1r.v"
