@@ -16,6 +16,7 @@ from templates import (
     UNIT_STRIDE_LOAD_CODE_TEMPLATE,
     UNIT_STRIDE_STORE_CODE_TEMPLATE,
     STRIDED_LOAD_CODE_TEMPLATE,
+    STRIDED_STORE_CODE_TEMPLATE,
     MASK_CODE,
     ARITH_VF_CODE_TEMPLATE,
     ARITH_VI_CODE_TEMPLATE,
@@ -167,13 +168,14 @@ class UnitStrideLoadStore:
         )
 
 
-class StridedLoad:
+class StridedLoadStore:
     """Generate vlse<EEW>.v tests."""
 
-    def __init__(self, filename, lmul, eew):
+    def __init__(self, filename, lmul, eew, insn):
         self.filename = filename
         self.lmul = lmul
         self.eew = eew
+        self.insn = insn
 
     def __str__(self):
         maxstride = 2
@@ -181,13 +183,17 @@ class StridedLoad:
         test_data = generate_test_data(test_data_bytes)
         test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
 
+        template = (
+            STRIDED_LOAD_CODE_TEMPLATE
+            if self.insn == "vlse"
+            else STRIDED_STORE_CODE_TEMPLATE
+        )
+
         code = ""
         vlmax = (VLEN // self.eew) * self.lmul
         for vl in [vlmax // 2, vlmax - 1, vlmax]:
-            # TODO: Stride can be negative.
-            for stride in [i * (self.eew // 8) for i in [0, 1, maxstride]]:
-
-                code += STRIDED_LOAD_CODE_TEMPLATE.format(
+            for stride in [i * (self.eew // 8) for i in [-1, -2, 0, 1, maxstride]]:
+                code += template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -200,7 +206,7 @@ class StridedLoad:
                     to_reg=self.lmul * 2,
                 )
 
-                code += STRIDED_LOAD_CODE_TEMPLATE.format(
+                code += template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -213,7 +219,7 @@ class StridedLoad:
                     to_reg=self.lmul * 2,
                 )
 
-                code += STRIDED_LOAD_CODE_TEMPLATE.format(
+                code += template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -226,7 +232,7 @@ class StridedLoad:
                     to_reg=self.lmul * 2,
                 )
 
-                code += STRIDED_LOAD_CODE_TEMPLATE.format(
+                code += template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -324,7 +330,11 @@ class Arith:
         vd_lmul = self.lmul
         vs1 = self.lmul * 2
         vs2 = self.lmul * 3
-        if self.insn.startswith("vw") or self.insn.startswith("vfw") or self.insn.startswith("vfncvt"):
+        if (
+            self.insn.startswith("vw")
+            or self.insn.startswith("vfw")
+            or self.insn.startswith("vfncvt")
+        ):
             vd *= 2
             vd_lmul *= 2
             vs1 *= 2
@@ -448,9 +458,10 @@ def main():
 
     for lmul in [1, 2, 4, 8]:
         for eew in [8, 16, 32, 64]:
-            filename = f"vlse{eew}.v_LMUL{lmul}.S"
-            test = StridedLoad(filename, lmul, eew)
-            save_to_file(BASE_PATH + filename, str(test))
+            for insn in ["vlse", "vsse"]:
+                filename = f"{insn}{eew}.v_LMUL{lmul}.S"
+                test = StridedLoadStore(filename, lmul, eew, insn)
+                save_to_file(BASE_PATH + filename, str(test))
 
     for lmul in [1, 2, 4, 8]:
         for sew in [8, 16, 32, 64]:

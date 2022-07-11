@@ -200,6 +200,29 @@ STRIDED_LOAD_CODE_TEMPLATE = """
 
   addi x0, x{from_reg}, {to_reg}"""
 
+STRIDED_STORE_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{eew},m{lmul},ta,ma
+  la a2, tdat
+  mv s1, a2
+  addi a2, a2, 8
+  vle{eew}.v v{lmul}, (a2)
+  la a1, res
+  vse{eew}.v v{lmul}, (a1)
+  vle{eew}.v v{lmul}, (s1)
+
+  {mask_code}
+  li t0, {vl}
+  vsetvli t1, t0, e{eew},m{lmul},{vta},{vma}
+  li t0, {stride}
+  vsse{eew}.v v{lmul}, (a1), t0{v0t}
+
+  li t0, -1
+  vsetvli t1, t0, e{eew},m{lmul},ta,ma
+  vle{eew}.v v{lmul}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}"""
+
 INDEXED_TEMPLATE = """
 RVTEST_CODE_BEGIN
 
