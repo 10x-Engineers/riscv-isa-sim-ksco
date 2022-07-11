@@ -15,6 +15,8 @@ from templates import (
     STRIDE_TEMPLATE,
     UNIT_STRIDE_LOAD_CODE_TEMPLATE,
     UNIT_STRIDE_STORE_CODE_TEMPLATE,
+    VLM_CODE_TEMPLATE,
+    VSM_CODE_TEMPLATE,
     STRIDED_LOAD_CODE_TEMPLATE,
     STRIDED_STORE_CODE_TEMPLATE,
     MASK_CODE,
@@ -162,6 +164,33 @@ class UnitStrideLoadStore:
             filename=self.filename,
             insn_name=f"{self.insn}{self.eew}.v",
             extras=f"With LMUL={self.lmul}",
+            nbytes=test_data_bytes,
+            test_data_str=test_data_str,
+            code=code,
+        )
+
+
+class UnitStrideMaskLoadStore:
+    """Generate vlm.v, vsm.v tests."""
+
+    def __init__(self, filename, insn):
+        self.filename = filename
+        self.insn = insn
+
+    def __str__(self):
+        test_data_bytes = vlenb + 8
+        test_data = generate_test_data(test_data_bytes)
+        test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
+
+        code_template = VLM_CODE_TEMPLATE if self.insn == "vlm" else VSM_CODE_TEMPLATE
+        code = ""
+        for vl in [vlenb // 2, vlenb - 1, vlenb]:
+            code += code_template.format(vl=vl)
+
+        return (HEADER_TEMPLATE + STRIDE_TEMPLATE).format(
+            filename=self.filename,
+            insn_name=f"{self.insn}.v",
+            extras="",
             nbytes=test_data_bytes,
             test_data_str=test_data_str,
             code=code,
@@ -455,6 +484,11 @@ def main():
                 filename = f"{insn}{eew}.v_LMUL{lmul}.S"
                 test = UnitStrideLoadStore(filename, insn, lmul, eew)
                 save_to_file(BASE_PATH + filename, str(test))
+
+    for insn in ["vlm", "vsm"]:
+        filename = f"{insn}.v.S"
+        test = UnitStrideMaskLoadStore(filename, insn)
+        save_to_file(BASE_PATH + filename, str(test))
 
     for lmul in [1, 2, 4, 8]:
         for eew in [8, 16, 32, 64]:

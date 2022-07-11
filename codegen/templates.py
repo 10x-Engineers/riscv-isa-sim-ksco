@@ -151,6 +151,47 @@ UNIT_STRIDE_STORE_CODE_TEMPLATE = """
 
   addi x0, x{from_reg}, {to_reg}"""
 
+VLM_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e8,m1,ta,ma
+  la a2, tdat
+  mv s1, a2
+  addi a2, a2, 8
+  vle8.v v0, (a2)
+
+  li t0, {vl}
+  vsetvli t1, t0, e8,m1,ta,ma
+  vlm.v v0, (s1)
+
+  li t0, -1
+  vsetvli t1, t0, e8,m1,ta,ma
+  la a1, res
+  vse8.v v0, (a1)
+
+  addi x0, x0, 1"""
+
+VSM_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e8,m1,ta,ma
+  la a2, tdat
+  mv s1, a2
+  addi a2, a2, 8
+  vle8.v v0, (a2)
+  la a1, res
+  vse8.v v0, (a1)
+  vle8.v v0, (s1)
+
+  li t0, {vl}
+  vsetvli t1, t0, e8,m1,ta,ma
+  vsm.v v0, (s1)
+
+  li t0, -1
+  vsetvli t1, t0, e8,m1,ta,ma
+  la a1, res
+  vle8.v v0, (a1)
+
+  addi x0, x0, 1"""
+
 STRIDE_TEMPLATE = """
 RVTEST_CODE_BEGIN
 
