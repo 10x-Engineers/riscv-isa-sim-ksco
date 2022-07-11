@@ -320,6 +320,65 @@ INDEXED_LOAD_CODE_TEMPLATE = """
 
   addi x0, x{from_reg}, {to_reg}"""
 
+
+INDEXED_STORE_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  la a2, tdat
+  mv s1, a2
+  addi a2, a2, 8
+  vle{sew}.v v{vd}, (a2)
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+  vle{sew}.v v{vd}, (s1)
+
+  {mask_code}
+  li t0, {vl}
+  vsetvli t1, t0, e{offset_eew},m{emul},ta,ma
+  la a2, idat
+  vle{offset_eew}.v v{vs2}, (a2)
+
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  {insn}{offset_eew}.v v{vd}, (a1), v{vs2}{v0t}
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vle{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}"""
+
+
+INDEXED_TEMPLATE = """
+RVTEST_CODE_BEGIN
+
+{code}
+
+  TEST_CASE(2, x0, 0x0)
+  TEST_PASSFAIL
+
+RVTEST_CODE_END
+
+  .data
+RVTEST_DATA_BEGIN
+
+res:
+  .zero {nbytes}
+
+tdat:
+{test_data_str}
+
+idat:
+{index_data_str}
+
+mask:
+  .quad 0x5555555555555555
+  .quad 0x5555555555555555
+  .quad 0x5555555555555555
+  .quad 0x5555555555555555
+
+RVTEST_DATA_END"""
+
 ARITH_VV_CODE_TEMPLATE = """
   li t0, -1
   vsetvli t1, t0, e{sew},m{lmul},ta,ma

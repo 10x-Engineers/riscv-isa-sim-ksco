@@ -5,6 +5,7 @@ Generate RV64 tests.
 """
 
 import os
+from re import template
 import sys
 from constants import VLEN, vlenb, BASE_PATH
 from templates import (
@@ -19,6 +20,9 @@ from templates import (
     VSM_CODE_TEMPLATE,
     STRIDED_LOAD_CODE_TEMPLATE,
     STRIDED_STORE_CODE_TEMPLATE,
+    INDEXED_LOAD_CODE_TEMPLATE,
+    INDEXED_STORE_CODE_TEMPLATE,
+    INDEXED_TEMPLATE,
     MASK_CODE,
     ARITH_VF_CODE_TEMPLATE,
     ARITH_VI_CODE_TEMPLATE,
@@ -36,6 +40,7 @@ from templates import (
 
 from utils import (
     generate_test_data,
+    generate_indexed_data,
     save_to_file,
     floathex,
 )
@@ -212,7 +217,7 @@ class StridedLoadStore:
         test_data = generate_test_data(test_data_bytes)
         test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
 
-        template = (
+        code_template = (
             STRIDED_LOAD_CODE_TEMPLATE
             if self.insn == "vlse"
             else STRIDED_STORE_CODE_TEMPLATE
@@ -222,7 +227,7 @@ class StridedLoadStore:
         vlmax = (VLEN // self.eew) * self.lmul
         for vl in [vlmax // 2, vlmax - 1, vlmax]:
             for stride in [i * (self.eew // 8) for i in [-1, -2, 0, 1, maxstride]]:
-                code += template.format(
+                code += code_template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -235,7 +240,7 @@ class StridedLoadStore:
                     to_reg=self.lmul * 2,
                 )
 
-                code += template.format(
+                code += code_template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -248,7 +253,7 @@ class StridedLoadStore:
                     to_reg=self.lmul * 2,
                 )
 
-                code += template.format(
+                code += code_template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -261,7 +266,7 @@ class StridedLoadStore:
                     to_reg=self.lmul * 2,
                 )
 
-                code += template.format(
+                code += code_template.format(
                     lmul=self.lmul,
                     eew=self.eew,
                     vl=vl,
@@ -280,6 +285,110 @@ class StridedLoadStore:
             extras=f"With LMUL={self.lmul}",
             nbytes=test_data_bytes,
             test_data_str=test_data_str,
+            code=code,
+        )
+
+
+class IndexedLoadStore:
+    """Generates indexed load and store tests."""
+
+    def __init__(self, filename, insn, lmul, sew, offset_eew):
+        self.filename = filename
+        self.insn = insn
+        self.lmul = lmul
+        self.sew = sew
+        self.offset_eew = offset_eew
+
+    def __str__(self):
+        emul = max(int((self.offset_eew / self.sew) * self.lmul), 1)
+        test_data_bytes = (VLEN * self.lmul) // 8 + 8
+        test_data = generate_test_data(test_data_bytes)
+        index_data = generate_indexed_data(vlenb * emul, self.offset_eew)
+        index_data = [d * (self.sew // 8) for d in index_data]
+        test_data_str = "\n".join([f"  .quad 0x{e:x}" for e in test_data])
+        index_data_str = "\n".join([f"  .quad 0x{e:x}" for e in index_data])
+
+        code_template = (
+            INDEXED_LOAD_CODE_TEMPLATE
+            if self.insn.startswith("vl")
+            else INDEXED_STORE_CODE_TEMPLATE
+        )
+
+        code = ""
+        vlmax = (VLEN // self.sew) * self.lmul
+        for vl in [vlmax // 2, vlmax - 1, vlmax]:
+            code += code_template.format(
+                insn=self.insn,
+                lmul=self.lmul,
+                emul=emul,
+                sew=self.sew,
+                offset_eew=self.offset_eew,
+                vl=vl,
+                vd=self.lmul,
+                vs2=max(self.lmul * 2, emul * 2),
+                mask_code="",
+                v0t="",
+                vma="ma",
+                vta="ta",
+                from_reg=self.lmul,
+                to_reg=self.lmul * 2,
+            )
+            code += code_template.format(
+                insn=self.insn,
+                lmul=self.lmul,
+                emul=emul,
+                sew=self.sew,
+                offset_eew=self.offset_eew,
+                vl=vl,
+                vd=self.lmul,
+                vs2=max(self.lmul * 2, emul * 2),
+                mask_code=MASK_CODE,
+                v0t=", v0.t",
+                vma="ma",
+                vta="ta",
+                from_reg=self.lmul,
+                to_reg=self.lmul * 2,
+            )
+            code += code_template.format(
+                insn=self.insn,
+                lmul=self.lmul,
+                emul=emul,
+                sew=self.sew,
+                offset_eew=self.offset_eew,
+                vl=vl,
+                vd=self.lmul,
+                vs2=max(self.lmul * 2, emul * 2),
+                mask_code="",
+                v0t="",
+                vma="ma",
+                vta="tu",
+                from_reg=self.lmul,
+                to_reg=self.lmul * 2,
+            )
+            code += code_template.format(
+                insn=self.insn,
+                lmul=self.lmul,
+                emul=emul,
+                sew=self.sew,
+                offset_eew=self.offset_eew,
+                vl=vl,
+                vd=self.lmul,
+                vs2=max(self.lmul * 2, emul * 2),
+                mask_code=MASK_CODE,
+                v0t=", v0.t",
+                vma="mu",
+                vta="ta",
+                from_reg=self.lmul,
+                to_reg=self.lmul * 2,
+            )
+
+        return (HEADER_TEMPLATE + INDEXED_TEMPLATE).format(
+            filename=self.filename,
+            insn_name=f"{self.insn}{self.offset_eew}.v",
+            extras=f"With LMUL={self.lmul}, SEW={self.sew}",
+            nbytes=test_data_bytes,
+            test_data_str=test_data_str,
+            index_data_str=index_data_str,
             code=code,
         )
 
@@ -496,6 +605,16 @@ def main():
                 filename = f"{insn}{eew}.v_LMUL{lmul}.S"
                 test = StridedLoadStore(filename, lmul, eew, insn)
                 save_to_file(BASE_PATH + filename, str(test))
+
+    for lmul in [1, 2, 4, 8]:
+        for sew in [8, 16, 32, 64]:
+            for offset_eew in [8, 16, 32, 64]:
+                if (offset_eew // sew) * lmul > 8:
+                    continue
+                for insn in ["vluxei", "vloxei", "vsuxei", "vsoxei"]:
+                    filename = f"{insn}{offset_eew}.v_LMUL{lmul}SEW{sew}.S"
+                    test = IndexedLoadStore(filename, insn, lmul, sew, offset_eew)
+                    save_to_file(BASE_PATH + filename, str(test))
 
     for lmul in [1, 2, 4, 8]:
         for sew in [8, 16, 32, 64]:
