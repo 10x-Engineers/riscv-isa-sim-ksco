@@ -414,6 +414,9 @@ class Arith:
             self.insn.startswith("vfcvt")
             or self.insn.startswith("vfwcvt")
             or self.insn.startswith("vfncvt")
+            or self.insn.startswith("vfsqrt")
+            or self.insn.startswith("vfrsqrt7")
+            or self.insn.startswith("vfrec7")
         ):
             code_template = ARITH_CVT_CODE_TEMPLATE
         elif self.suffix in ["vi", "vim", "wi"]:
@@ -468,10 +471,26 @@ class Arith:
         vd_lmul = self.lmul
         vs1 = self.lmul * 2
         vs2 = self.lmul * 3
+        vd_lmul = self.lmul
+        vs2_lmul = self.lmul
+        vs2_sew = self.sew
+        vs1_lmul = self.lmul
         if (
+            self.insn.startswith("vnsrl")
+            or self.insn.startswith("vnsra")
+            or self.insn.startswith("vnclipu")
+            or self.insn.startswith("vnclip")
+        ):
+            vs2 += self.lmul
+            vs2_lmul *= 2
+            vs2_sew *= 2
+        elif self.insn.startswith("vfncvt"):
+            vd = self.lmul * 2
+            vs1 = self.lmul * 4
+            vs1_lmul *= 2
+        elif (
             self.insn.startswith("vw")
             or self.insn.startswith("vfw")
-            or self.insn.startswith("vfncvt")
         ):
             vd *= 2
             vd_lmul *= 2
@@ -487,6 +506,9 @@ class Arith:
             code += code_template.format(
                 sew=self.sew,
                 vd_lmul=vd_lmul,
+                vs1_lmul=vs1_lmul,
+                vs2_lmul=vs2_lmul,
+                vs2_sew=vs2_sew,
                 lmul=self.lmul,
                 vl=vl,
                 mask_code=MASK_CODE if self.suffix.endswith("m") else "",
@@ -506,6 +528,9 @@ class Arith:
             code += code_template.format(
                 sew=self.sew,
                 vd_lmul=vd_lmul,
+                vs1_lmul=vs1_lmul,
+                vs2_lmul=vs2_lmul,
+                vs2_sew=vs2_sew,
                 lmul=self.lmul,
                 vl=vl,
                 mask_code=MASK_CODE if self.suffix.endswith("m") else "",
@@ -531,6 +556,9 @@ class Arith:
                 code += code_template.format(
                     sew=self.sew,
                     vd_lmul=vd_lmul,
+                    vs1_lmul=vs1_lmul,
+                    vs2_lmul=vs2_lmul,
+                    vs2_sew=vs2_sew,
                     lmul=self.lmul,
                     vl=vl,
                     mask_code=MASK_CODE,
@@ -550,6 +578,9 @@ class Arith:
                 code += code_template.format(
                     sew=self.sew,
                     vd_lmul=vd_lmul,
+                    vs1_lmul=vs1_lmul,
+                    vs2_lmul=vs2_lmul,
+                    vs2_sew=vs2_sew,
                     lmul=self.lmul,
                     vl=vl,
                     mask_code=MASK_CODE,
@@ -838,6 +869,9 @@ def main():
                 "vfcvt.rtz.x.f.v",
                 "vfcvt.f.xu.v",
                 "vfcvt.f.x.v",
+                "vfsqrt.v",
+                "vfrsqrt7.v",
+                "vfrec7.v"
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -949,24 +983,18 @@ def main():
                 "vfwcvt.f.xu.v",
                 "vfwcvt.f.x.v",
                 "vfwcvt.f.f.v",
+                "vfncvt.xu.f.w",
+                "vfncvt.x.f.w",
+                "vfncvt.rtz.xu.f.w",
+                "vfncvt.rtz.x.f.w",
+                "vfncvt.f.xu.w",
+                "vfncvt.f.x.w",
+                "vfncvt.f.f.w",
+                "vfncvt.rod.f.f.w",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
-        # for sew in [64]:
-        #     for insn in [
-        #         "vfncvt.xu.f.w",
-        #         "vfncvt.x.f.w",
-        #         "vfncvt.rtz.xu.f.w",
-        #         "vfncvt.rtz.x.f.w",
-        #         "vfncvt.f.xu.w",
-        #         "vfncvt.f.x.w",
-        #         "vfncvt.f.f.w",
-        #         "vfncvt.rod.f.f.w",
-        #     ]:
-        #         filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-        #         arith = Arith(filename, insn, lmul, sew)
-        #         save_to_file(BASE_PATH + filename, str(arith))
 
     sew = 8
     insn = "vmv1r.v"

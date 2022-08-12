@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import os
 import re
-import sys
 import subprocess
 
 from constants import BASE_PATH, ISA_PATH

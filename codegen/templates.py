@@ -381,9 +381,9 @@ RVTEST_DATA_END"""
 
 ARITH_VV_CODE_TEMPLATE = """
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{vs2_sew},m{vs2_lmul},ta,ma
   la a2, tdat
-  vle{sew}.v v{vs1}, (a2)
+  vle{vs2_sew}.v v{vs1}, (a2)
 
   vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
@@ -407,9 +407,9 @@ ARITH_VV_CODE_TEMPLATE = """
 
 ARITH_VI_CODE_TEMPLATE = """
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{vs2_sew},m{vs2_lmul},ta,ma
   la a2, tdat
-  vle{sew}.v v{vs1}, (a2)
+  vle{vs2_sew}.v v{vs1}, (a2)
 
   vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
@@ -429,9 +429,9 @@ ARITH_VI_CODE_TEMPLATE = """
 
 ARITH_VX_CODE_TEMPLATE = """
   li t0, -1
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{vs2_sew},m{vs2_lmul},ta,ma
   la a2, tdat
-  vle{sew}.v v{vs1}, (a2)
+  vle{vs2_sew}.v v{vs1}, (a2)
 
   vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
   vle{sew}.v v{vd}, (a2)
@@ -614,7 +614,7 @@ ARITH_CVT_CODE_TEMPLATE = """
   vle{sew}.v v{vd}, (a2)
   la a2, tdat+8
 
-  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vsetvli t1, t0, e{sew},m{vs1_lmul},ta,ma
   vle{sew}.v v{vs1}, (a2)
 
   {mask_code}
