@@ -417,6 +417,7 @@ class Arith:
             or self.insn.startswith("vfsqrt")
             or self.insn.startswith("vfrsqrt7")
             or self.insn.startswith("vfrec7")
+            or self.insn.startswith("vfclass")
         ):
             code_template = ARITH_CVT_CODE_TEMPLATE
         elif self.suffix in ["vi", "vim", "wi"]:
@@ -871,7 +872,8 @@ def main():
                 "vfcvt.f.x.v",
                 "vfsqrt.v",
                 "vfrsqrt7.v",
-                "vfrec7.v"
+                "vfrec7.v",
+                "vfclass.v"
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
