@@ -5,7 +5,6 @@ Generate RV64 tests.
 """
 
 import os
-from re import template
 import sys
 from constants import VLEN, vlenb, BASE_PATH
 from templates import (
@@ -36,6 +35,7 @@ from templates import (
     ARITH_VMV_VX_CODE_TEMPLATE,
     ARITH_EXT_CODE_TEMPLATE,
     ARITH_CVT_CODE_TEMPLATE,
+    ARITH_VFMV_CODE_TEMPLATE,
 )
 
 from utils import (
@@ -420,6 +420,8 @@ class Arith:
             or self.insn.startswith("vfclass")
         ):
             code_template = ARITH_CVT_CODE_TEMPLATE
+        elif self.insn.startswith("vfmv"):
+            code_template = ARITH_VFMV_CODE_TEMPLATE
         elif self.suffix in ["vi", "vim", "wi"]:
             code_template = ARITH_VI_CODE_TEMPLATE
         elif self.suffix in ["vx", "vxm", "wx"]:
@@ -489,10 +491,7 @@ class Arith:
             vd = self.lmul * 2
             vs1 = self.lmul * 4
             vs1_lmul *= 2
-        elif (
-            self.insn.startswith("vw")
-            or self.insn.startswith("vfw")
-        ):
+        elif self.insn.startswith("vw") or self.insn.startswith("vfw"):
             vd *= 2
             vd_lmul *= 2
             vs1 *= 2
@@ -873,7 +872,10 @@ def main():
                 "vfsqrt.v",
                 "vfrsqrt7.v",
                 "vfrec7.v",
-                "vfclass.v"
+                "vfclass.v",
+                # vfmv.f.s is tested by the following two insns.
+                "vfmv.v.f",
+                "vfmv.s.f",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
