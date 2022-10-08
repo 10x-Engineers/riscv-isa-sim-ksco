@@ -36,6 +36,8 @@ from templates import (
     ARITH_EXT_CODE_TEMPLATE,
     ARITH_CVT_CODE_TEMPLATE,
     ARITH_VFMV_CODE_TEMPLATE,
+    ARITH_M_CODE_TEMPLATE,
+    ARITH_RDM_CODE_TEMPLATE
 )
 
 from utils import (
@@ -464,6 +466,10 @@ class Arith:
             code_template = ARITH_VMV_VX_CODE_TEMPLATE
         elif self.insn.startswith("vzext") or self.insn.startswith("vsext"):
             code_template = ARITH_EXT_CODE_TEMPLATE
+        elif self.insn in ["vmsbf.m","vmsif.m","vmsof.m","viota.m"]:
+            code_template = ARITH_M_CODE_TEMPLATE
+        elif self.insn in ["vfirst.m","vcpop.m"]:
+            code_template = ARITH_RDM_CODE_TEMPLATE
         else:
             raise Exception("Unknown suffix.")
 
@@ -1000,6 +1006,20 @@ def main():
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
 
+    for lmul in [1, 2, 4, 8]:
+        for sew in [8, 16, 32, 64]:
+            for insn in [
+                "vfirst.m",
+                "vcpop.m",
+                "vmsif.m",
+                "vmsbf.m",
+                "vmsbf.m",
+                "viota.m"
+            ]:
+                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+                arith = Arith(filename, insn, lmul, sew)
+                save_to_file(BASE_PATH + filename, str(arith))
+    
     sew = 8
     insn = "vmv1r.v"
     lmul = 1

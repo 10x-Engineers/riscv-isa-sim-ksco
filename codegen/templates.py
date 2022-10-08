@@ -405,6 +405,59 @@ ARITH_VV_CODE_TEMPLATE = """
   addi x0, x{from_reg}, {to_reg}
 """
 
+ARITH_M_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{vs2_sew},m{vs2_lmul},ta,ma
+  la a2, tdat
+  vle{vs2_sew}.v v{vs2}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  vle{sew}.v v{vd}, (a2)
+  la a2, tdat+8
+
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vle{sew}.v v{vs2}, (a2)
+
+  {mask_code}
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  {op} v{vd}, v{vs1}{v0t}
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
+ARITH_RDM_CODE_TEMPLATE = """
+  li t0, -1
+  vsetvli t1, t0, e{vs2_sew},m{vs2_lmul},ta,ma
+  la a2, tdat
+  vle{vs2_sew}.v v{vs1}, (a2)
+
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  vle{sew}.v v{vd}, (a2)
+  la a2, tdat+8
+
+  vsetvli t1, t0, e{sew},m{lmul},ta,ma
+  vle{sew}.v v{vs2}, (a2)
+
+  {mask_code}
+  li t0, {vl}
+  vsetvli t1, t0, e{sew},m{lmul},{vta},{vma}
+  {op} a5, v{vs1}{v0t}
+  vmv.v.x v{vd}, a5
+
+  li t0, -1
+  vsetvli t1, t0, e{sew},m{vd_lmul},ta,ma
+  la a1, res
+  vse{sew}.v v{vd}, (a1)
+
+  addi x0, x{from_reg}, {to_reg}
+"""
+
 ARITH_VI_CODE_TEMPLATE = """
   li t0, -1
   vsetvli t1, t0, e{vs2_sew},m{vs2_lmul},ta,ma
