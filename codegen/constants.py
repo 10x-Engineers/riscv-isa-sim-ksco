@@ -2,8 +2,8 @@
 Constants.
 """
 
-VLEN = 256
+VLEN = 4096
 vlenb = VLEN // 8
 
-ISA_PATH = "/Users/ksco/Developer/riscv-tests-upstream/isa/"
+ISA_PATH = "/home/r6/Shafiullah/vf_1_0/riscv-tests-ksco/isa/"
 BASE_PATH = ISA_PATH + "rv64uv/"

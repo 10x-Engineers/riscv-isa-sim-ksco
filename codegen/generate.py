@@ -466,9 +466,9 @@ class Arith:
             code_template = ARITH_VMV_VX_CODE_TEMPLATE
         elif self.insn.startswith("vzext") or self.insn.startswith("vsext"):
             code_template = ARITH_EXT_CODE_TEMPLATE
-        elif self.insn in ["vmsbf.m","vmsif.m","vmsof.m","viota.m"]:
+        elif self.insn in ["vmsbf.m", "vmsif.m", "vmsof.m", "viota.m"]:
             code_template = ARITH_M_CODE_TEMPLATE
-        elif self.insn in ["vfirst.m","vcpop.m"]:
+        elif self.insn in ["vfirst.m", "vcpop.m"]:
             code_template = ARITH_RDM_CODE_TEMPLATE
         else:
             raise Exception("Unknown suffix.")
@@ -478,12 +478,13 @@ class Arith:
 
         vd = self.lmul
         vd_lmul = self.lmul
+        vd_sew = self.sew
         vs1 = self.lmul * 2
         vs2 = self.lmul * 3
-        vd_lmul = self.lmul
         vs2_lmul = self.lmul
         vs2_sew = self.sew
         vs1_lmul = self.lmul
+        vs1_sew = self.sew
         if (
             self.insn.startswith("vnsrl")
             or self.insn.startswith("vnsra")
@@ -500,6 +501,7 @@ class Arith:
         elif self.insn.startswith("vw") or self.insn.startswith("vfw"):
             vd *= 2
             vd_lmul *= 2
+            vd_sew *= 2
             vs1 *= 2
             vs2 *= 2
         elif self.insn == "vrgatherei16.vv":
@@ -512,7 +514,9 @@ class Arith:
             code += code_template.format(
                 sew=self.sew,
                 vd_lmul=vd_lmul,
+                vd_sew=vd_sew,
                 vs1_lmul=vs1_lmul,
+                vs1_sew=vs1_sew,
                 vs2_lmul=vs2_lmul,
                 vs2_sew=vs2_sew,
                 lmul=self.lmul,
@@ -522,7 +526,8 @@ class Arith:
                 vma="ma",
                 v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
                 op=self.insn,
-                imm=floathex(1.0, self.sew) if self.insn.startswith("vf") else 1,
+                imm=floathex(1.0, self.sew) if self.insn.startswith(
+                    "vf") else 1,
                 fmv_unit="w" if self.sew == 32 else "d",
                 vd=vd,
                 vs1=vs1,
@@ -534,7 +539,9 @@ class Arith:
             code += code_template.format(
                 sew=self.sew,
                 vd_lmul=vd_lmul,
+                vd_sew=vd_sew,
                 vs1_lmul=vs1_lmul,
+                vs1_sew=vs1_sew,
                 vs2_lmul=vs2_lmul,
                 vs2_sew=vs2_sew,
                 lmul=self.lmul,
@@ -562,7 +569,9 @@ class Arith:
                 code += code_template.format(
                     sew=self.sew,
                     vd_lmul=vd_lmul,
+                    vd_sew=vd_sew,
                     vs1_lmul=vs1_lmul,
+                    vs1_sew=vs1_sew,
                     vs2_lmul=vs2_lmul,
                     vs2_sew=vs2_sew,
                     lmul=self.lmul,
@@ -572,7 +581,8 @@ class Arith:
                     vma="ma",
                     v0t=", v0.t",
                     op=self.insn,
-                    imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
+                    imm=floathex(1, self.sew) if self.insn.startswith(
+                        "vf") else 1,
                     fmv_unit="w" if self.sew == 32 else "d",
                     vd=vd,
                     vs1=vs1,
@@ -584,7 +594,9 @@ class Arith:
                 code += code_template.format(
                     sew=self.sew,
                     vd_lmul=vd_lmul,
+                    vd_sew=vd_sew,
                     vs1_lmul=vs1_lmul,
+                    vs1_sew=vs1_sew,
                     vs2_lmul=vs2_lmul,
                     vs2_sew=vs2_sew,
                     lmul=self.lmul,
@@ -594,7 +606,8 @@ class Arith:
                     vma="ma",
                     v0t=", v0" if self.suffix.endswith("m") else ", v0.t",
                     op=self.insn,
-                    imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
+                    imm=floathex(1, self.sew) if self.insn.startswith(
+                        "vf") else 1,
                     fmv_unit="w" if self.sew == 32 else "d",
                     vd=vd,
                     vs1=vs1,
@@ -615,198 +628,200 @@ class Arith:
 
 def main():
     """Main function."""
-    for nf in [1, 2, 4, 8]:
-        for eew in [8, 16, 32, 64]:
-            filename = f"vl{nf}re{eew}.v.S"
-            save_to_file(BASE_PATH + filename, str(LoadWhole(filename, nf, eew)))
+    # for nf in [1, 2, 4, 8]:
+    #     for eew in [8, 16, 32, 64]:
+    #         filename = f"vl{nf}re{eew}.v.S"
+    #         save_to_file(BASE_PATH + filename,
+    #                      str(LoadWhole(filename, nf, eew)))
 
-    for nf in [1, 2, 4, 8]:
-        filename = f"vs{nf}r.v.S"
-        save_to_file(BASE_PATH + filename, str(StoreWhole(filename, nf)))
+    # for nf in [1, 2, 4, 8]:
+    #     filename = f"vs{nf}r.v.S"
+    #     save_to_file(BASE_PATH + filename, str(StoreWhole(filename, nf)))
 
-    for lmul in [1, 2, 4, 8]:
-        for eew in [8, 16, 32, 64]:
-            for insn in ["vle", "vse"]:
-                filename = f"{insn}{eew}.v_LMUL{lmul}.S"
-                test = UnitStrideLoadStore(filename, insn, lmul, eew)
-                save_to_file(BASE_PATH + filename, str(test))
+    # for lmul in [1, 2, 4, 8]:
+    #     for eew in [8, 16, 32, 64]:
+    #         for insn in ["vle", "vse"]:
+    #             filename = f"{insn}{eew}.v_LMUL{lmul}.S"
+    #             test = UnitStrideLoadStore(filename, insn, lmul, eew)
+    #             save_to_file(BASE_PATH + filename, str(test))
 
-    for insn in ["vlm", "vsm"]:
-        filename = f"{insn}.v.S"
-        test = UnitStrideMaskLoadStore(filename, insn)
-        save_to_file(BASE_PATH + filename, str(test))
+    # for insn in ["vlm", "vsm"]:
+    #     filename = f"{insn}.v.S"
+    #     test = UnitStrideMaskLoadStore(filename, insn)
+    #     save_to_file(BASE_PATH + filename, str(test))
 
-    for lmul in [1, 2, 4, 8]:
-        for eew in [8, 16, 32, 64]:
-            for insn in ["vlse", "vsse"]:
-                filename = f"{insn}{eew}.v_LMUL{lmul}.S"
-                test = StridedLoadStore(filename, lmul, eew, insn)
-                save_to_file(BASE_PATH + filename, str(test))
+    # # for lmul in [1, 2, 4, 8]:
+    # #     for eew in [8, 16, 32, 64]:
+    # #         for insn in ["vlse", "vsse"]:
+    # #             filename = f"{insn}{eew}.v_LMUL{lmul}.S"
+    # #             test = StridedLoadStore(filename, lmul, eew, insn)
+    # #             save_to_file(BASE_PATH + filename, str(test))
 
-    for lmul in [1, 2, 4, 8]:
-        for sew in [8, 16, 32, 64]:
-            for offset_eew in [8, 16, 32, 64]:
-                if (offset_eew // sew) * lmul > 8:
-                    continue
-                for insn in ["vluxei", "vloxei", "vsuxei", "vsoxei"]:
-                    filename = f"{insn}{offset_eew}.v_LMUL{lmul}SEW{sew}.S"
-                    test = IndexedLoadStore(filename, insn, lmul, sew, offset_eew)
-                    save_to_file(BASE_PATH + filename, str(test))
+    # for lmul in [1, 2, 4, 8]:
+    #     for sew in [8, 16, 32, 64]:
+    #         for offset_eew in [8, 16, 32, 64]:
+    #             if (offset_eew // sew) * lmul > 8:
+    #                 continue
+    #             for insn in ["vluxei", "vloxei", "vsuxei", "vsoxei"]:
+    #                 filename = f"{insn}{offset_eew}.v_LMUL{lmul}SEW{sew}.S"
+    #                 test = IndexedLoadStore(
+    #                     filename, insn, lmul, sew, offset_eew)
+    #                 save_to_file(BASE_PATH + filename, str(test))
 
     for lmul in [1, 2, 4, 8]:
         for sew in [8, 16, 32, 64]:
             for insn in [
-                "vaadd.vv",
-                "vaadd.vx",
-                "vaaddu.vv",
-                "vaaddu.vx",
-                "vadc.vim",
-                "vadc.vvm",
-                "vadc.vxm",
-                "vadd.vi",
+                #             "vaadd.vv",
+                #             "vaadd.vx",
+                #             "vaaddu.vv",
+                #             "vaaddu.vx",
+                #             "vadc.vim",
+                #             "vadc.vvm",
+                #             "vadc.vxm",
+                #             "vadd.vi",
                 "vadd.vv",
-                "vadd.vx",
-                "vand.vi",
-                "vand.vv",
-                "vand.vx",
-                "vasub.vv",
-                "vasub.vx",
-                "vasubu.vv",
-                "vasubu.vx",
-                "vdiv.vv",
-                "vdiv.vx",
-                "vdivu.vv",
-                "vdivu.vx",
-                "vmacc.vv",
-                "vmacc.vx",
-                "vmadc.vi",
-                "vmadc.vim",
-                "vmadc.vv",
-                "vmadc.vvm",
-                "vmadc.vx",
-                "vmadc.vxm",
-                "vmadd.vv",
-                "vmadd.vx",
-                "vmand.mm",
-                "vmandn.mm",
-                "vmax.vv",
-                "vmax.vx",
-                "vmaxu.vv",
-                "vmaxu.vx",
-                "vmerge.vim",
-                "vmerge.vvm",
-                "vmerge.vxm",
-                "vmin.vv",
-                "vmin.vx",
-                "vminu.vv",
-                "vminu.vx",
-                "vmnand.mm",
-                "vmnor.mm",
-                "vmor.mm",
-                "vmorn.mm",
-                "vmsbc.vv",
-                "vmsbc.vvm",
-                "vmsbc.vx",
-                "vmsbc.vxm",
-                "vmseq.vi",
-                "vmseq.vv",
-                "vmseq.vx",
-                "vmsgt.vi",
-                "vmsgt.vx",
-                "vmsgtu.vi",
-                "vmsgtu.vx",
-                "vmsle.vi",
-                "vmsle.vv",
-                "vmsle.vx",
-                "vmsleu.vi",
-                "vmsleu.vv",
-                "vmsleu.vx",
-                "vmslt.vv",
-                "vmslt.vx",
-                "vmsltu.vv",
-                "vmsltu.vx",
-                "vmsne.vi",
-                "vmsne.vv",
-                "vmsne.vx",
-                "vmul.vv",
-                "vmul.vx",
-                "vmulh.vv",
-                "vmulh.vx",
-                "vmulhsu.vv",
-                "vmulhsu.vx",
-                "vmulhu.vv",
-                "vmulhu.vx",
-                "vmxnor.mm",
-                "vmxor.mm",
-                "vnmsac.vv",
-                "vnmsac.vx",
-                "vnmsub.vv",
-                "vnmsub.vx",
-                "vor.vi",
-                "vor.vv",
-                "vor.vx",
-                "vredand.vs",
-                "vredmax.vs",
-                "vredmaxu.vs",
-                "vredmin.vs",
-                "vredminu.vs",
-                "vredor.vs",
-                "vredsum.vs",
-                "vredxor.vs",
-                "vrem.vv",
-                "vrem.vx",
-                "vremu.vv",
-                "vremu.vx",
-                "vrgather.vi",
-                "vrgather.vv",
-                "vrgather.vx",
-                "vrsub.vi",
-                "vrsub.vx",
-                "vsadd.vi",
-                "vsadd.vv",
-                "vsadd.vx",
-                "vsaddu.vi",
-                "vsaddu.vv",
-                "vsaddu.vx",
-                "vsbc.vvm",
-                "vsbc.vxm",
-                "vslide1down.vx",
-                "vslide1up.vx",
-                "vslidedown.vi",
-                "vslidedown.vx",
-                "vslideup.vi",
-                "vslideup.vx",
-                "vsll.vi",
-                "vsll.vv",
-                "vsll.vx",
-                "vsmul.vv",
-                "vsmul.vx",
-                "vsra.vi",
-                "vsra.vv",
-                "vsra.vx",
-                "vsrl.vi",
-                "vsrl.vv",
-                "vsrl.vx",
-                "vssra.vi",
-                "vssra.vv",
-                "vssra.vx",
-                "vssrl.vi",
-                "vssrl.vv",
-                "vssrl.vx",
-                "vssub.vv",
-                "vssub.vx",
-                "vssubu.vv",
-                "vssubu.vx",
-                "vsub.vv",
-                "vsub.vx",
-                "vxor.vi",
-                "vxor.vv",
-                "vxor.vx",
-                "vcompress.vm",
-                "vmv.v.v",
-                "vmv.v.x",
-                "vmv.v.i",
-                "vmv.s.x",
+                #             "vadd.vx",
+                #             "vand.vi",
+                #             "vand.vv",
+                #             "vand.vx",
+                #             "vasub.vv",
+                #             "vasub.vx",
+                #             "vasubu.vv",
+                #             "vasubu.vx",
+                #             "vdiv.vv",
+                #             "vdiv.vx",
+                #             "vdivu.vv",
+                #             "vdivu.vx",
+                #             "vmacc.vv",
+                #             "vmacc.vx",
+                #             "vmadc.vi",
+                #             "vmadc.vim",
+                #             "vmadc.vv",
+                #             "vmadc.vvm",
+                #             "vmadc.vx",
+                #             "vmadc.vxm",
+                #             "vmadd.vv",
+                #             "vmadd.vx",
+                #             "vmand.mm",
+                #             "vmandn.mm",
+                #             "vmax.vv",
+                #             "vmax.vx",
+                #             "vmaxu.vv",
+                #             "vmaxu.vx",
+                #             "vmerge.vim",
+                #             "vmerge.vvm",
+                #             "vmerge.vxm",
+                #             "vmin.vv",
+                #             "vmin.vx",
+                #             "vminu.vv",
+                #             "vminu.vx",
+                #             "vmnand.mm",
+                #             "vmnor.mm",
+                #             "vmor.mm",
+                #             "vmorn.mm",
+                #             "vmsbc.vv",
+                #             "vmsbc.vvm",
+                #             "vmsbc.vx",
+                #             "vmsbc.vxm",
+                #             "vmseq.vi",
+                #             "vmseq.vv",
+                #             "vmseq.vx",
+                #             "vmsgt.vi",
+                #             "vmsgt.vx",
+                #             "vmsgtu.vi",
+                #             "vmsgtu.vx",
+                #             "vmsle.vi",
+                #             "vmsle.vv",
+                #             "vmsle.vx",
+                #             "vmsleu.vi",
+                #             "vmsleu.vv",
+                #             "vmsleu.vx",
+                #             "vmslt.vv",
+                #             "vmslt.vx",
+                #             "vmsltu.vv",
+                #             "vmsltu.vx",
+                #             "vmsne.vi",
+                #             "vmsne.vv",
+                #             "vmsne.vx",
+                #             "vmul.vv",
+                #             "vmul.vx",
+                #             "vmulh.vv",
+                #             "vmulh.vx",
+                #             "vmulhsu.vv",
+                #             "vmulhsu.vx",
+                #             "vmulhu.vv",
+                #             "vmulhu.vx",
+                #             "vmxnor.mm",
+                #             "vmxor.mm",
+                #             "vnmsac.vv",
+                #             "vnmsac.vx",
+                #             "vnmsub.vv",
+                #             "vnmsub.vx",
+                #             "vor.vi",
+                #             "vor.vv",
+                #             "vor.vx",
+                #             "vredand.vs",
+                #             "vredmax.vs",
+                #             "vredmaxu.vs",
+                #             "vredmin.vs",
+                #             "vredminu.vs",
+                #             "vredor.vs",
+                #             "vredsum.vs",
+                #             "vredxor.vs",
+                #             "vrem.vv",
+                #             "vrem.vx",
+                #             "vremu.vv",
+                #             "vremu.vx",
+                #             "vrgather.vi",
+                #             "vrgather.vv",
+                #             "vrgather.vx",
+                #             "vrsub.vi",
+                #             "vrsub.vx",
+                #             "vsadd.vi",
+                #             "vsadd.vv",
+                #             "vsadd.vx",
+                #             "vsaddu.vi",
+                #             "vsaddu.vv",
+                #             "vsaddu.vx",
+                #             "vsbc.vvm",
+                #             "vsbc.vxm",
+                #             "vslide1down.vx",
+                #             "vslide1up.vx",
+                #             "vslidedown.vi",
+                #             "vslidedown.vx",
+                #             "vslideup.vi",
+                #             "vslideup.vx",
+                #             "vsll.vi",
+                #             "vsll.vv",
+                #             "vsll.vx",
+                #             "vsmul.vv",
+                #             "vsmul.vx",
+                #             "vsra.vi",
+                #             "vsra.vv",
+                #             "vsra.vx",
+                #             "vsrl.vi",
+                #             "vsrl.vv",
+                #             "vsrl.vx",
+                #             "vssra.vi",
+                #             "vssra.vv",
+                #             "vssra.vx",
+                #             "vssrl.vi",
+                #             "vssrl.vv",
+                #             "vssrl.vx",
+                #             "vssub.vv",
+                #             "vssub.vx",
+                #             "vssubu.vv",
+                #             "vssubu.vx",
+                #             "vsub.vv",
+                #             "vsub.vx",
+                #             "vxor.vi",
+                #             "vxor.vv",
+                #             "vxor.vx",
+                #             "vcompress.vm",
+                #             "vmv.v.v",
+                #             "vmv.v.x",
+                #             "vmv.v.i",
+                #             "vmv.s.x", #151
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -814,236 +829,236 @@ def main():
 
         for sew in [32, 64]:
             for insn in [
-                "vfadd.vf",
+                #             "vfadd.vf",
                 "vfadd.vv",
-                "vfmax.vf",
-                "vfmax.vv",
-                "vfmin.vf",
-                "vfmin.vv",
-                "vfsgnj.vf",
-                "vfsgnj.vv",
-                "vfsgnjn.vf",
-                "vfsgnjn.vv",
-                "vfsgnjx.vf",
-                "vfsgnjx.vv",
-                "vfsub.vf",
-                "vfsub.vv",
-                "vfredosum.vs",
-                "vfredusum.vs",
-                "vfredmax.vs",
-                "vfredmin.vs",
-                "vfredosum.vs",
-                "vfredusum.vs",
-                "vfredmax.vs",
-                "vfredmin.vs",
-                "vfslide1up.vf",
-                "vfslide1down.vf",
-                "vmfeq.vv",
-                "vmfeq.vf",
-                "vmfne.vv",
-                "vmfne.vf",
-                "vmflt.vv",
-                "vmflt.vf",
-                "vmfle.vv",
-                "vmfle.vf",
-                "vmfgt.vf",
-                "vmfge.vf",
-                "vfmul.vv",
-                "vfmul.vf",
-                "vfdiv.vv",
-                "vfdiv.vf",
-                "vfrdiv.vf",
-                "vfmacc.vv",
-                "vfmacc.vf",
-                "vfnmacc.vv",
-                "vfnmacc.vf",
-                "vfmsac.vv",
-                "vfmsac.vf",
-                "vfnmsac.vv",
-                "vfnmsac.vf",
-                "vfmadd.vv",
-                "vfmadd.vf",
-                "vfnmadd.vv",
-                "vfnmadd.vf",
-                "vfmsub.vv",
-                "vfmsub.vf",
-                "vfnmsub.vv",
-                "vfnmsub.vf",
-                "vfcvt.xu.f.v",
-                "vfcvt.x.f.v",
-                "vfcvt.rtz.xu.f.v",
-                "vfcvt.rtz.x.f.v",
-                "vfcvt.f.xu.v",
-                "vfcvt.f.x.v",
-                "vfsqrt.v",
-                "vfrsqrt7.v",
-                "vfrec7.v",
-                "vfclass.v",
-                # vfmv.f.s is tested by the following two insns.
-                "vfmv.v.f",
-                "vfmv.s.f",
+                #             "vfmax.vf",
+                #             "vfmax.vv",
+                #             "vfmin.vf",
+                #             "vfmin.vv",
+                #             "vfsgnj.vf",
+                #             "vfsgnj.vv",
+                #             "vfsgnjn.vf",
+                #             "vfsgnjn.vv",
+                #             "vfsgnjx.vf",
+                #             "vfsgnjx.vv",
+                #             "vfsub.vf",
+                #             "vfsub.vv",
+                #             "vfredosum.vs",
+                #             "vfredusum.vs",
+                #             "vfredmax.vs",
+                #             "vfredmin.vs",
+                #             "vfredosum.vs",
+                #             "vfredusum.vs",
+                #             "vfredmax.vs",
+                #             "vfredmin.vs",
+                #             "vfslide1up.vf",
+                #             "vfslide1down.vf",
+                #             "vmfeq.vv",
+                #             "vmfeq.vf",
+                #             "vmfne.vv",
+                #             "vmfne.vf",
+                #             "vmflt.vv",
+                #             "vmflt.vf",
+                #             "vmfle.vv",
+                #             "vmfle.vf",
+                #             "vmfgt.vf",
+                #             "vmfge.vf",
+                #             "vfmul.vv",
+                #             "vfmul.vf",
+                #             "vfdiv.vv",
+                #             "vfdiv.vf",
+                #             "vfrdiv.vf",
+                #             "vfmacc.vv",
+                #             "vfmacc.vf",
+                #             "vfnmacc.vv",
+                #             "vfnmacc.vf",
+                #             "vfmsac.vv",
+                #             "vfmsac.vf",
+                #             "vfnmsac.vv",
+                #             "vfnmsac.vf",
+                #             "vfmadd.vv",
+                #             "vfmadd.vf",
+                #             "vfnmadd.vv",
+                #             "vfnmadd.vf",
+                #             "vfmsub.vv",
+                #             "vfmsub.vf",
+                #             "vfnmsub.vv",
+                #             "vfnmsub.vf",
+                #             "vfcvt.xu.f.v",
+                #             "vfcvt.x.f.v",
+                #             "vfcvt.rtz.xu.f.v",
+                #             "vfcvt.rtz.x.f.v",
+                #             "vfcvt.f.xu.v",
+                #             "vfcvt.f.x.v",
+                #             "vfsqrt.v",
+                #             "vfrsqrt7.v",
+                #             "vfrec7.v",
+                #             "vfclass.v",
+                #             # vfmv.f.s is tested by the following two insns.
+                #             "vfmv.v.f",
+                #             "vfmv.s.f", #68
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
 
-    for lmul in [1, 2, 4, 8]:
-        for sew in [8, 16, 32, 64]:
-            emul = (16 / sew) * lmul
-            if emul > 8:
-                continue
-            insn = "vrgatherei16.vv"
-            filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-            arith = Arith(filename, insn, lmul, sew)
-            save_to_file(BASE_PATH + filename, str(arith))
+    # for lmul in [1, 2, 4, 8]:
+    #     for sew in [8, 16, 32, 64]:
+    #         emul = (16 / sew) * lmul
+    #         if emul > 8:
+    #             continue
+    #         insn = "vrgatherei16.vv"
+    #         filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    #         arith = Arith(filename, insn, lmul, sew)
+    #         save_to_file(BASE_PATH + filename, str(arith))
 
-    for lmul in [1, 2, 4, 8]:
-        for sew in [8, 16, 32, 64]:
-            for f in [2, 4, 8]:
-                if (lmul / f) < 1 or (sew // f) < 8:
-                    continue
-                insn = f"vzext.vf{f}"
-                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, insn, lmul, sew)
-                save_to_file(BASE_PATH + filename, str(arith))
+    # for lmul in [1, 2, 4, 8]:
+    #     for sew in [8, 16, 32, 64]:
+    #         for f in [2, 4, 8]:
+    #             if (lmul / f) < 1 or (sew // f) < 8:
+    #                 continue
+    #             insn = f"vzext.vf{f}"
+    #             filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    #             arith = Arith(filename, insn, lmul, sew)
+    #             save_to_file(BASE_PATH + filename, str(arith))
 
-                insn = f"vsext.vf{f}"
-                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, insn, lmul, sew)
-                save_to_file(BASE_PATH + filename, str(arith))
+    #             insn = f"vsext.vf{f}"
+    #             filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    #             arith = Arith(filename, insn, lmul, sew)
+    #             save_to_file(BASE_PATH + filename, str(arith))
 
-    for lmul in [1, 2, 4]:
-        for sew in [8, 16, 32]:
-            for insn in [
-                "vnsrl.wv",
-                "vnsrl.wx",
-                "vnsrl.wi",
-                "vnsra.wv",
-                "vnsra.wx",
-                "vnsra.wi",
-                "vnclipu.wv",
-                "vnclipu.wx",
-                "vnclipu.wi",
-                "vnclip.wv",
-                "vnclip.wx",
-                "vnclip.wi",
-                "vwredsumu.vs",
-                "vwredsum.vs",
-                "vwaddu.vv",
-                "vwaddu.vx",
-                "vwsubu.vv",
-                "vwsubu.vx",
-                "vwadd.vv",
-                "vwadd.vx",
-                "vwsub.vv",
-                "vwsub.vx",
-                "vwaddu.wv",
-                "vwaddu.wx",
-                "vwsubu.wv",
-                "vwsubu.wx",
-                "vwadd.wv",
-                "vwadd.wx",
-                "vwsub.wv",
-                "vwsub.wx",
-                "vwmul.vv",
-                "vwmul.vx",
-                "vwmulu.vv",
-                "vwmulu.vx",
-                "vwmulsu.vv",
-                "vwmulsu.vx",
-                "vwmaccu.vv",
-                "vwmaccu.vx",
-                "vwmacc.vv",
-                "vwmacc.vx",
-                "vwmaccsu.vv",
-                "vwmaccsu.vx",
-                "vwmaccus.vx",
-            ]:
-                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, insn, lmul, sew)
-                save_to_file(BASE_PATH + filename, str(arith))
+    # for lmul in [1, 2, 4]:
+    #     for sew in [8, 16, 32]:
+    #         for insn in [
+    #             "vnsrl.wv",
+    #             "vnsrl.wx",
+    #             "vnsrl.wi",
+    #             "vnsra.wv",
+    #             "vnsra.wx",
+    #             "vnsra.wi",
+    #             "vnclipu.wv",
+    #             "vnclipu.wx",
+    #             "vnclipu.wi",
+    #             "vnclip.wv",
+    #             "vnclip.wx",
+    #             "vnclip.wi",
+    #             "vwredsumu.vs",
+    #             "vwredsum.vs",
+    #             "vwaddu.vv",
+    #             "vwaddu.vx",
+    #             "vwsubu.vv",
+    #             "vwsubu.vx",
+    #             "vwadd.vv",
+    #             "vwadd.vx",
+    #             "vwsub.vv",
+    #             "vwsub.vx",
+    #             "vwaddu.wv",
+    #             "vwaddu.wx",
+    #             "vwsubu.wv",
+    #             "vwsubu.wx",
+    #             "vwadd.wv",
+    #             "vwadd.wx",
+    #             "vwsub.wv",
+    #             "vwsub.wx",
+    #             "vwmul.vv",
+    #             "vwmul.vx",
+    #             "vwmulu.vv",
+    #             "vwmulu.vx",
+    #             "vwmulsu.vv",
+    #             "vwmulsu.vx",
+    #             "vwmaccu.vv",
+    #             "vwmaccu.vx",
+    #             "vwmacc.vv",
+    #             "vwmacc.vx",
+    #             "vwmaccsu.vv",
+    #             "vwmaccsu.vx",
+    #             "vwmaccus.vx", # 43
+    #         ]:
+    #             filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    #             arith = Arith(filename, insn, lmul, sew)
+    #             save_to_file(BASE_PATH + filename, str(arith))
 
-    for lmul in [1, 2, 4]:
-        for sew in [32]:
-            for insn in [
-                "vfwadd.vv",
-                "vfwadd.vf",
-                "vfwsub.vv",
-                "vfwsub.vf",
-                "vfwadd.wv",
-                "vfwadd.wf",
-                "vfwsub.wv",
-                "vfwsub.wf",
-                "vfwmacc.vv",
-                "vfwmacc.vf",
-                "vfwnmacc.vv",
-                "vfwnmacc.vf",
-                "vfwmsac.vv",
-                "vfwmsac.vf",
-                "vfwnmsac.vv",
-                "vfwnmsac.vf",
-                "vfwredosum.vs",
-                "vfwredusum.vs",
-                "vfwmul.vv",
-                "vfwmul.vf",
-                "vfwcvt.xu.f.v",
-                "vfwcvt.x.f.v",
-                "vfwcvt.rtz.xu.f.v",
-                "vfwcvt.rtz.x.f.v",
-                "vfwcvt.f.xu.v",
-                "vfwcvt.f.x.v",
-                "vfwcvt.f.f.v",
-                "vfncvt.xu.f.w",
-                "vfncvt.x.f.w",
-                "vfncvt.rtz.xu.f.w",
-                "vfncvt.rtz.x.f.w",
-                "vfncvt.f.xu.w",
-                "vfncvt.f.x.w",
-                "vfncvt.f.f.w",
-                "vfncvt.rod.f.f.w",
-            ]:
-                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, insn, lmul, sew)
-                save_to_file(BASE_PATH + filename, str(arith))
+    # for lmul in [1, 2, 4]:
+    #     for sew in [32]:
+    #         for insn in [
+    #             "vfwadd.vv",
+    #             "vfwadd.vf",
+    #             "vfwsub.vv",
+    #             "vfwsub.vf",
+    #             "vfwadd.wv",
+    #             "vfwadd.wf",
+    #             "vfwsub.wv",
+    #             "vfwsub.wf",
+    #             "vfwmacc.vv",
+    #             "vfwmacc.vf",
+    #             "vfwnmacc.vv",
+    #             "vfwnmacc.vf",
+    #             "vfwmsac.vv",
+    #             "vfwmsac.vf",
+    #             "vfwnmsac.vv",
+    #             "vfwnmsac.vf",
+    #             "vfwredosum.vs",
+    #             "vfwredusum.vs",
+    #             "vfwmul.vv",
+    #             "vfwmul.vf",
+    #             "vfwcvt.xu.f.v",
+    #             "vfwcvt.x.f.v",
+    #             "vfwcvt.rtz.xu.f.v",
+    #             "vfwcvt.rtz.x.f.v",
+    #             "vfwcvt.f.xu.v",
+    #             "vfwcvt.f.x.v",
+    #             "vfwcvt.f.f.v",
+    #             "vfncvt.xu.f.w",
+    #             "vfncvt.x.f.w",
+    #             "vfncvt.rtz.xu.f.w",
+    #             "vfncvt.rtz.x.f.w",
+    #             "vfncvt.f.xu.w",
+    #             "vfncvt.f.x.w",
+    #             "vfncvt.f.f.w",
+    #             "vfncvt.rod.f.f.w", #35
+    #         ]:
+    #             filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    #             arith = Arith(filename, insn, lmul, sew)
+    #             save_to_file(BASE_PATH + filename, str(arith))
 
-    for lmul in [1, 2, 4, 8]:
-        for sew in [8, 16, 32, 64]:
-            for insn in [
-                "vfirst.m",
-                "vcpop.m",
-                "vmsif.m",
-                "vmsbf.m",
-                "vmsbf.m",
-                "viota.m"
-            ]:
-                filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-                arith = Arith(filename, insn, lmul, sew)
-                save_to_file(BASE_PATH + filename, str(arith))
-    
-    sew = 8
-    insn = "vmv1r.v"
-    lmul = 1
-    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-    arith = Arith(filename, insn, lmul, sew)
-    save_to_file(BASE_PATH + filename, str(arith))
+    # for lmul in [1, 2, 4, 8]:
+    #     for sew in [8, 16, 32, 64]:
+    #         for insn in [
+    #             "vfirst.m",
+    #             "vcpop.m",
+    #             "vmsif.m",
+    #             "vmsbf.m",
+    #             "vmsbf.m",
+    #             "viota.m"
+    #         ]:
+    #             filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    #             arith = Arith(filename, insn, lmul, sew)
+    #             save_to_file(BASE_PATH + filename, str(arith))
 
-    insn = "vmv2r.v"
-    lmul = 2
-    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-    arith = Arith(filename, insn, lmul, sew)
-    save_to_file(BASE_PATH + filename, str(arith))
+    # sew = 8
+    # insn = "vmv1r.v"
+    # lmul = 1
+    # filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    # arith = Arith(filename, insn, lmul, sew)
+    # save_to_file(BASE_PATH + filename, str(arith))
 
-    insn = "vmv4r.v"
-    lmul = 4
-    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-    arith = Arith(filename, insn, lmul, sew)
-    save_to_file(BASE_PATH + filename, str(arith))
+    # insn = "vmv2r.v"
+    # lmul = 2
+    # filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    # arith = Arith(filename, insn, lmul, sew)
+    # save_to_file(BASE_PATH + filename, str(arith))
 
-    insn = "vmv8r.v"
-    lmul = 8
-    filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
-    arith = Arith(filename, insn, lmul, sew)
-    save_to_file(BASE_PATH + filename, str(arith))
+    # insn = "vmv4r.v"
+    # lmul = 4
+    # filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    # arith = Arith(filename, insn, lmul, sew)
+    # save_to_file(BASE_PATH + filename, str(arith))
+
+    # insn = "vmv8r.v"
+    # lmul = 8
+    # filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
+    # arith = Arith(filename, insn, lmul, sew)
+    # save_to_file(BASE_PATH + filename, str(arith))
 
     files = []
     for file in sorted(os.listdir(BASE_PATH)):
