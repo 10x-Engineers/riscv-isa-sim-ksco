@@ -17,7 +17,7 @@ for file in sorted(os.listdir(ISA_PATH)):
 
     output = subprocess.check_output(
         [
-            "/home/r6/Shafiullah/vf_1_0/riscv-isa-sim-ksco/build/spike",
+            "/Users/ksco/Developer/riscv-isa-sim-ksco/build/spike",
             "--isa",
             "rv64gcv",
             "--varch",
