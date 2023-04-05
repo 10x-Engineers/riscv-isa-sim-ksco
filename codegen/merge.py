@@ -27,7 +27,7 @@ for file in sorted(os.listdir(ISA_PATH)):
     )
     output = output.decode(encoding="UTF-8").split("---")
 
-    assembly_filename = file[len("rv64uv-p-"):]
+    assembly_filename = file[len("rv64uv-p-") :]
     content = read_file(f"{BASE_PATH}{assembly_filename}.S")
 
     idx = 0
@@ -39,7 +39,7 @@ for file in sorted(os.listdir(ISA_PATH)):
         content = "{}{}{}".format(
             content[: match.start()],
             str(output[idx]),
-            content[match.end():],
+            content[match.end() :],
         )
         idx += 1
 
