@@ -466,9 +466,9 @@ class Arith:
             code_template = ARITH_VMV_VX_CODE_TEMPLATE
         elif self.insn.startswith("vzext") or self.insn.startswith("vsext"):
             code_template = ARITH_EXT_CODE_TEMPLATE
-        elif self.insn in ["vmsbf.m", "vmsif.m", "vmsof.m", "viota.m"]:
+        elif self.insn in ["vmsbf.m","vmsif.m","vmsof.m","viota.m"]:
             code_template = ARITH_M_CODE_TEMPLATE
-        elif self.insn in ["vfirst.m", "vcpop.m"]:
+        elif self.insn in ["vfirst.m","vcpop.m"]:
             code_template = ARITH_RDM_CODE_TEMPLATE
         else:
             raise Exception("Unknown suffix.")
@@ -526,8 +526,7 @@ class Arith:
                 vma="ma",
                 v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
                 op=self.insn,
-                imm=floathex(1.0, self.sew) if self.insn.startswith(
-                    "vf") else 1,
+                imm=floathex(1.0, self.sew) if self.insn.startswith("vf") else 1,
                 fmv_unit="w" if self.sew == 32 else "d",
                 vd=vd,
                 vs1=vs1,
@@ -581,8 +580,7 @@ class Arith:
                     vma="ma",
                     v0t=", v0.t",
                     op=self.insn,
-                    imm=floathex(1, self.sew) if self.insn.startswith(
-                        "vf") else 1,
+                    imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
                     fmv_unit="w" if self.sew == 32 else "d",
                     vd=vd,
                     vs1=vs1,
@@ -606,8 +604,7 @@ class Arith:
                     vma="ma",
                     v0t=", v0" if self.suffix.endswith("m") else ", v0.t",
                     op=self.insn,
-                    imm=floathex(1, self.sew) if self.insn.startswith(
-                        "vf") else 1,
+                    imm=floathex(1, self.sew) if self.insn.startswith("vf") else 1,
                     fmv_unit="w" if self.sew == 32 else "d",
                     vd=vd,
                     vs1=vs1,
@@ -631,8 +628,7 @@ def main():
     for nf in [1, 2, 4, 8]:
         for eew in [8, 16, 32, 64]:
             filename = f"vl{nf}re{eew}.v.S"
-            save_to_file(BASE_PATH + filename,
-                         str(LoadWhole(filename, nf, eew)))
+            save_to_file(BASE_PATH + filename, str(LoadWhole(filename, nf, eew)))
 
     for nf in [1, 2, 4, 8]:
         filename = f"vs{nf}r.v.S"
@@ -664,8 +660,7 @@ def main():
                     continue
                 for insn in ["vluxei", "vloxei", "vsuxei", "vsoxei"]:
                     filename = f"{insn}{offset_eew}.v_LMUL{lmul}SEW{sew}.S"
-                    test = IndexedLoadStore(
-                        filename, insn, lmul, sew, offset_eew)
+                    test = IndexedLoadStore(filename, insn, lmul, sew, offset_eew)
                     save_to_file(BASE_PATH + filename, str(test))
 
     for lmul in [1, 2, 4, 8]:
@@ -821,7 +816,7 @@ def main():
                 "vmv.v.v",
                 "vmv.v.x",
                 "vmv.v.i",
-                "vmv.s.x",  # 151
+                "vmv.s.x",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -896,7 +891,7 @@ def main():
                 "vfclass.v",
                 # vfmv.f.s is tested by the following two insns.
                 "vfmv.v.f",
-                "vfmv.s.f",  # 68
+                "vfmv.s.f",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -972,7 +967,7 @@ def main():
                 "vwmacc.vx",
                 "vwmaccsu.vv",
                 "vwmaccsu.vx",
-                "vwmaccus.vx",  # 43
+                "vwmaccus.vx",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -1015,7 +1010,7 @@ def main():
                 "vfncvt.f.xu.w",
                 "vfncvt.f.x.w",
                 "vfncvt.f.f.w",
-                "vfncvt.rod.f.f.w",  # 35
+                "vfncvt.rod.f.f.w",
             ]:
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
@@ -1034,6 +1029,7 @@ def main():
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
+    
     sew = 8
     insn = "vmv1r.v"
     lmul = 1
