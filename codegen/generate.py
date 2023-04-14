@@ -478,12 +478,13 @@ class Arith:
 
         vd = self.lmul
         vd_lmul = self.lmul
+        vd_sew = self.sew
         vs1 = self.lmul * 2
         vs2 = self.lmul * 3
-        vd_lmul = self.lmul
         vs2_lmul = self.lmul
         vs2_sew = self.sew
         vs1_lmul = self.lmul
+        vs1_sew = self.sew
         if (
             self.insn.startswith("vnsrl")
             or self.insn.startswith("vnsra")
@@ -497,9 +498,14 @@ class Arith:
             vd = self.lmul * 2
             vs1 = self.lmul * 4
             vs1_lmul *= 2
+            vs1_sew *= 2
         elif self.insn.startswith("vw") or self.insn.startswith("vfw"):
+            if self.suffix in ["wv", "wf"]:
+                vs2_sew *= 2
+                vs2_lmul *= 2
             vd *= 2
             vd_lmul *= 2
+            vd_sew *= 2
             vs1 *= 2
             vs2 *= 2
         elif self.insn == "vrgatherei16.vv":
@@ -512,7 +518,9 @@ class Arith:
             code += code_template.format(
                 sew=self.sew,
                 vd_lmul=vd_lmul,
+                vd_sew=vd_sew,
                 vs1_lmul=vs1_lmul,
+                vs1_sew=vs1_sew,
                 vs2_lmul=vs2_lmul,
                 vs2_sew=vs2_sew,
                 lmul=self.lmul,
@@ -522,7 +530,8 @@ class Arith:
                 vma="ma",
                 v0t=", v0" if self.suffix in ["vvm", "vxm", "vim"] else "",
                 op=self.insn,
-                imm=floathex(1.0, self.sew) if self.insn.startswith("vf") else 1,
+                imm=floathex(1.0, self.sew) if self.insn.startswith(
+                    "vf") else 1,
                 fmv_unit="w" if self.sew == 32 else "d",
                 vd=vd,
                 vs1=vs1,
@@ -534,7 +543,9 @@ class Arith:
             code += code_template.format(
                 sew=self.sew,
                 vd_lmul=vd_lmul,
+                vd_sew=vd_sew,
                 vs1_lmul=vs1_lmul,
+                vs1_sew=vs1_sew,
                 vs2_lmul=vs2_lmul,
                 vs2_sew=vs2_sew,
                 lmul=self.lmul,
@@ -562,7 +573,9 @@ class Arith:
                 code += code_template.format(
                     sew=self.sew,
                     vd_lmul=vd_lmul,
+                    vd_sew=vd_sew,
                     vs1_lmul=vs1_lmul,
+                    vs1_sew=vs1_sew,
                     vs2_lmul=vs2_lmul,
                     vs2_sew=vs2_sew,
                     lmul=self.lmul,
@@ -584,7 +597,9 @@ class Arith:
                 code += code_template.format(
                     sew=self.sew,
                     vd_lmul=vd_lmul,
+                    vd_sew=vd_sew,
                     vs1_lmul=vs1_lmul,
+                    vs1_sew=vs1_sew,
                     vs2_lmul=vs2_lmul,
                     vs2_sew=vs2_sew,
                     lmul=self.lmul,
@@ -1019,7 +1034,7 @@ def main():
                 filename = f"{insn}_LMUL{lmul}SEW{sew}.S"
                 arith = Arith(filename, insn, lmul, sew)
                 save_to_file(BASE_PATH + filename, str(arith))
-    
+
     sew = 8
     insn = "vmv1r.v"
     lmul = 1

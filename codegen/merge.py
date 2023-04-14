@@ -17,11 +17,11 @@ for file in sorted(os.listdir(ISA_PATH)):
 
     output = subprocess.check_output(
         [
-            "/Users/ksco/Developer/riscv-isa-sim/build/spike",
+            "/Users/ksco/Developer/riscv-isa-sim-ksco/build/spike",
             "--isa",
             "rv64gcv",
             "--varch",
-            "vlen:256,elen:64",
+            "vlen:4096,elen:64",
             f"{ISA_PATH}{file}",
         ],
     )
